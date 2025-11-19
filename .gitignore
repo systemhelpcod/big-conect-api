@@ -1,20 +1,15 @@
-# No terminal, na pasta do projeto:
-cat > .gitignore << EOF
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment variables
-.env
-.env.local
-.env.production
+# Node modules (não ignorar para subir tudo)
+# node_modules/
 
 # Sessions and cache
 sessions/
 *.session
-*.json
+
+
+# Environment variables
+
+.env.local
+.env.production
 
 # Build outputs
 dist/
@@ -31,7 +26,7 @@ pids/
 # Runtime data
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Coverage directory
 coverage/
 .nyc_output/
 
@@ -53,4 +48,3 @@ Thumbs.db
 # Temporary folders
 tmp/
 temp/
-EOF
