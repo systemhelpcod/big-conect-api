@@ -60,7 +60,7 @@ curl -X DELETE http://127.0.0.1:9009/api/sessions/{sessionId}
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "text": "Olá! Mensagem via API Big Conect 🚀"
   }'
 ```
@@ -70,7 +70,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "text": "🚀 *Mensagem Formatada*\n\n✅ Negrito: *texto*\n✅ Itálico: _texto_\n✅ Tachado: ~texto~\n\n*API Big Conect* _funcionando_ ~perfeitamente~!"
   }'
 ```
@@ -80,7 +80,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "mediaUrl": "https://example.com/image.jpg",
     "type": "image",
     "caption": "Imagem enviada via API! 🖼️"
@@ -92,7 +92,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "mediaUrl": "https://example.com/video.mp4",
     "type": "video", 
     "caption": "Vídeo enviado via API! 🎥"
@@ -104,7 +104,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "mediaUrl": "https://example.com/audio.mp3",
     "type": "audio"
   }'
@@ -115,7 +115,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "mediaUrl": "https://example.com/document.pdf",
     "type": "document",
     "fileName": "documento.pdf",
@@ -128,7 +128,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "text": "Escolha uma opção:",
     "buttons": [
       {"id": "opt1", "text": "✅ Opção 1"},
@@ -144,7 +144,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423", 
+    "to": "5511999999999", 
     "text": "Menu Principal:",
     "buttons": [
       {"id": "menu1", "text": "🍕 Pedir Pizza"},
@@ -163,7 +163,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/list \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "text": "Selecione uma categoria:",
     "buttonText": "Abrir Menu", 
     "title": "Menu de Opções",
@@ -205,7 +205,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/list \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/reaction \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "messageId": "3EB0C3C04A87168A8F130E", 
     "reaction": "👍"
   }'
@@ -218,15 +218,15 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/bulk \
   -d '{
     "messages": [
       {
-        "to": "556292231423",
+        "to": "5511999999999",
         "text": "Primeira mensagem do lote 📨"
       },
       {
-        "to": "556292231423",
+        "to": "5511999999999",
         "text": "Segunda mensagem do lote 📨" 
       },
       {
-        "to": "556292231423",
+        "to": "5511999999999",
         "text": "Terceira mensagem do lote 📨"
       }
     ],
@@ -243,7 +243,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/bulk \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "text": "🎉 *PROMOÇÃO ESPECIAL!*\n\n📱 _Nova coleção chegando_ \n💰 *50% OFF* na primeira compra\n\n🚚 Frete grátis acima de R$99\n⏰ Oferta válida por 24h!\n\n👉 Acesse: loja.com/promocao"
   }'
 ```
@@ -253,7 +253,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423",
+    "to": "5511999999999",
     "text": "Olá! Como podemos ajudar você hoje?",
     "buttons": [
       {"id": "suporte", "text": "📞 Falar com Atendente"},
@@ -269,7 +269,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "556292231423", 
+    "to": "5511999999999", 
     "text": "🔔 *LEMBRETE IMPORTANTE*\n\n💊 Hora de tomar seu remédio\n⏰ Próxima dose: 20:00\n\n🏥 Não se esqueça da sua saúde! 💙"
   }'
 ```
