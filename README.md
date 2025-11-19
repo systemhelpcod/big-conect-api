@@ -372,4 +372,4 @@ LOG_LEVEL=debug
 - ✅ **Tipagem Forte** → TypeScript para confiabilidade
 - ✅ **Logs Detalhados** → Monitoramento completo
 
-**API Big Conect - Sua solução completa para WhatsApp Business!** 🚀
+**API Big Conect - Sua solução completa para WhatsApp Business!** 🚀# big-conect-api
