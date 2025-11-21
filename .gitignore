@@ -1,13 +1,15 @@
 # Node modules (não ignorar para subir tudo)
 # node_modules/
 
+# Node modules específicos (não subir)
+root/api/big2/beta/api-big-conect/node_modules
+
 # Sessions and cache
 sessions/
 *.session
 
-
 # Environment variables
-
+.env
 .env.local
 .env.production
 
@@ -48,3 +50,6 @@ Thumbs.db
 # Temporary folders
 tmp/
 temp/
+
+# 1Panel binary (não subir para o repositório)
+root/api/big2/beta/api-big-conect/1panel-v1.10.32-lts-linux-amd64

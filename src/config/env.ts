@@ -16,5 +16,7 @@ export const ENV = {
   WA_URL: process.env.WA_URL,
   AUTO_CLOSE: parseInt(process.env.AUTO_CLOSE || '15'),
   SECRET_KEY: process.env.SECRET_KEY || 'default-secret-key',
-  WEBHOOK_URL: process.env.WEBHOOK_URL
-};
+  WEBHOOK_URL: process.env.WEBHOOK_URL || '',
+  LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || '*'
+} as const;

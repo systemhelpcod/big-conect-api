@@ -17,10 +17,8 @@ function createBaileysCompatibleLogger(sessionId: string) {
   const sessionLogger = logger.child({ sessionId, module: 'baileys' });
   
   return {
-    // Propriedades básicas
     level: 'info' as const,
     
-    // Métodos de logging
     trace: (obj: any, msg?: string, ...args: any[]) => {
       if (typeof obj === 'string') {
         sessionLogger.trace({ msg: obj }, msg, ...args);
@@ -67,7 +65,6 @@ function createBaileysCompatibleLogger(sessionId: string) {
       // Não fazer nada - silent mode
     },
     
-    // Propriedades extras que o Baileys pode precisar
     child: (bindings: any) => createBaileysCompatibleLogger(sessionId),
     
     // Propriedades para compatibilidade
@@ -144,6 +141,13 @@ export class BaileysClient {
 
       logger.info(`🚀 Initializing WhatsApp session: ${this.sessionId}`);
 
+      // Enviar webhook de inicialização
+      await this.sendWebhook('session', {
+        event: 'SESSION_INITIALIZING',
+        status: 'initializing',
+        message: 'Starting WhatsApp session'
+      });
+
       // 1. Configurar estado de autenticação
       const { state, saveCreds } = await useMultiFileAuthState(
         `${ENV.PATCH_TOKENS}/${this.sessionId}`
@@ -178,10 +182,16 @@ export class BaileysClient {
 
       logger.info(`🔌 Creating WhatsApp socket...`);
       
-      // Usar any para evitar problemas de tipagem
       this.sock = makeWASocket(socketConfig as any);
       
       logger.info(`✅ Socket created successfully for session: ${this.sessionId}`);
+
+      // Enviar webhook de socket criado
+      await this.sendWebhook('session', {
+        event: 'SOCKET_CREATED',
+        status: 'connecting',
+        message: 'WhatsApp socket created, waiting for connection'
+      });
 
       // 6. Configurar handlers de eventos
       this.setupEventHandlers(saveCreds);
@@ -193,6 +203,15 @@ export class BaileysClient {
 
     } catch (error) {
       logger.error(`❌ Failed to initialize session ${this.sessionId}:`, error);
+      
+      // Enviar webhook de erro na inicialização
+      await this.sendWebhook('session', {
+        event: 'SESSION_INIT_FAILED',
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        message: 'Failed to initialize WhatsApp session'
+      });
+
       if (error instanceof Error) {
         logger.error(`📋 Error message: ${error.message}`);
       }
@@ -203,6 +222,19 @@ export class BaileysClient {
       }
       
       throw error;
+    }
+  }
+
+  private async sendWebhook(type: 'session' | 'message' | 'status' | 'presence' | 'group', data: any): Promise<void> {
+    try {
+      await webhookHandler.send({
+        type,
+        sessionId: this.sessionId,
+        data,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      logger.warn(`⚠️ Failed to send webhook for ${type}:`, error);
     }
   }
 
@@ -226,6 +258,26 @@ export class BaileysClient {
         await this.handleIncomingMessages(data);
       });
 
+      // Handler para atualizações de status de mensagens
+      this.sock.ev.on('messages.update', async (updates: any[]) => {
+        await this.handleMessageUpdates(updates);
+      });
+
+      // Handler para presença de usuários
+      this.sock.ev.on('presence.update', async (update: any) => {
+        await this.handlePresenceUpdate(update);
+      });
+
+      // Handler para atualizações de grupos
+      this.sock.ev.on('groups.update', async (updates: any[]) => {
+        await this.handleGroupUpdates(updates);
+      });
+
+      // Handler para contatos
+      this.sock.ev.on('contacts.update', async (updates: any[]) => {
+        await this.handleContactUpdates(updates);
+      });
+
       logger.info(`✅ Event handlers configured for session: ${this.sessionId}`);
 
     } catch (error) {
@@ -233,7 +285,7 @@ export class BaileysClient {
     }
   }
 
-  private handleConnectionUpdate(update: any): void {
+  private async handleConnectionUpdate(update: any): Promise<void> {
     try {
       const { connection, lastDisconnect, qr } = update;
 
@@ -249,15 +301,11 @@ export class BaileysClient {
         this.qrCode = qr;
         logger.info(`📱 QR Code generated for session: ${this.sessionId}`);
         
-        webhookHandler.send({
-          type: 'session',
-          sessionId: this.sessionId,
-          data: { 
-            qrCode: qr, 
-            status: 'QR_CODE_GENERATED',
-            message: 'Scan QR code to connect'
-          },
-          timestamp: new Date()
+        await this.sendWebhook('session', {
+          event: 'QR_CODE_GENERATED',
+          status: 'awaiting_scan',
+          qrCode: qr,
+          message: 'Scan QR code to connect WhatsApp'
         });
       }
 
@@ -267,15 +315,12 @@ export class BaileysClient {
         this.reconnectAttempts = 0;
         logger.info(`✅ Session ${this.sessionId} connected successfully!`);
         
-        webhookHandler.send({
-          type: 'session',
-          sessionId: this.sessionId,
-          data: { 
-            status: 'CONNECTED', 
-            userAgent: this.userAgent,
-            message: 'WhatsApp connected successfully'
-          },
-          timestamp: new Date()
+        await this.sendWebhook('session', {
+          event: 'CONNECTED',
+          status: 'connected',
+          userAgent: this.userAgent,
+          message: 'WhatsApp connected successfully',
+          timestamp: new Date().toISOString()
         });
       }
 
@@ -284,28 +329,71 @@ export class BaileysClient {
         this.isConnected = false;
         
         const shouldReconnect = this.shouldReconnect(lastDisconnect);
+        const disconnectReason = this.getDisconnectReason(lastDisconnect);
         
         logger.info(`🔴 Session ${this.sessionId} disconnected. Reconnect: ${shouldReconnect}`);
         
-        webhookHandler.send({
-          type: 'session',
-          sessionId: this.sessionId,
-          data: { 
-            status: 'DISCONNECTED',
-            shouldReconnect,
-            error: lastDisconnect?.error?.message,
-            reconnectAttempt: this.reconnectAttempts
-          },
-          timestamp: new Date()
+        await this.sendWebhook('session', {
+          event: 'DISCONNECTED',
+          status: 'disconnected',
+          shouldReconnect,
+          reason: disconnectReason,
+          error: lastDisconnect?.error?.message,
+          reconnectAttempt: this.reconnectAttempts,
+          message: `WhatsApp disconnected: ${disconnectReason}`
         });
 
         if (shouldReconnect) {
           this.attemptReconnect();
+        } else {
+          await this.sendWebhook('session', {
+            event: 'SESSION_ENDED',
+            status: 'ended',
+            reason: disconnectReason,
+            message: 'WhatsApp session ended, manual reconnection required'
+          });
         }
+      }
+
+      // Conexão conectando
+      if (connection === 'connecting') {
+        await this.sendWebhook('session', {
+          event: 'CONNECTING',
+          status: 'connecting',
+          message: 'Connecting to WhatsApp servers...'
+        });
       }
 
     } catch (error) {
       logger.error(`❌ Error handling connection update:`, error);
+    }
+  }
+
+  private getDisconnectReason(lastDisconnect: any): string {
+    if (!lastDisconnect?.error) return 'Unknown reason';
+    
+    try {
+      const error = lastDisconnect.error as Boom;
+      const statusCode = error?.output?.statusCode;
+      
+      switch (statusCode) {
+        case DisconnectReason.loggedOut:
+          return 'Logged out from another device';
+        case DisconnectReason.connectionLost:
+          return 'Connection lost';
+        case DisconnectReason.connectionClosed:
+          return 'Connection closed';
+        case DisconnectReason.connectionReplaced:
+          return 'Connection replaced by another session';
+        case DisconnectReason.timedOut:
+          return 'Connection timed out';
+        case DisconnectReason.restartRequired:
+          return 'Restart required';
+        default:
+          return `Error: ${statusCode}`;
+      }
+    } catch {
+      return 'Unknown error';
     }
   }
 
@@ -327,6 +415,16 @@ export class BaileysClient {
       
       logger.info(`🔄 Reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${reconnectDelay}ms`);
       
+      // Enviar webhook de tentativa de reconexão
+      this.sendWebhook('session', {
+        event: 'RECONNECT_ATTEMPT',
+        status: 'reconnecting',
+        attempt: this.reconnectAttempts,
+        maxAttempts: this.maxReconnectAttempts,
+        delay: reconnectDelay,
+        message: `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+      });
+
       setTimeout(() => {
         this.initialize().catch(error => {
           logger.error(`❌ Reconnect attempt ${this.reconnectAttempts} failed:`, error);
@@ -334,50 +432,140 @@ export class BaileysClient {
       }, reconnectDelay);
     } else {
       logger.error(`🚫 Max reconnect attempts (${this.maxReconnectAttempts}) reached`);
+      
+      this.sendWebhook('session', {
+        event: 'MAX_RECONNECT_ATTEMPTS',
+        status: 'failed',
+        maxAttempts: this.maxReconnectAttempts,
+        message: 'Maximum reconnection attempts reached'
+      });
     }
   }
 
   private async handleIncomingMessages(data: any): Promise<void> {
     try {
-      const { messages } = data;
+      const { messages, type } = data;
       
       if (!messages || !Array.isArray(messages)) return;
 
       for (const message of messages) {
-        if (!message.key?.fromMe && message.message) {
-          await this.processIncomingMessage(message);
-        }
+        // Processar todas as mensagens, incluindo as enviadas por nós
+        await this.processIncomingMessage(message, type);
       }
     } catch (error) {
       logger.error(`❌ Error processing incoming messages:`, error);
     }
   }
 
-  private async processIncomingMessage(message: any): Promise<void> {
+  private async processIncomingMessage(message: any, type: string): Promise<void> {
     try {
+      const isFromMe = message.key?.fromMe || false;
+      const messageType = Object.keys(message.message || {})[0] || 'unknown';
+      
       const messageData = {
         id: message.key?.id,
         from: message.key?.remoteJid,
         timestamp: new Date((message.messageTimestamp || Date.now() / 1000) * 1000),
-        type: Object.keys(message.message || {})[0] || 'unknown',
+        type: messageType,
         content: this.extractMessageContent(message),
         sender: {
           id: message.key?.participant || message.key?.remoteJid,
-          name: message.pushName || 'Unknown'
-        }
+          name: message.pushName || 'Unknown',
+          isFromMe
+        },
+        messageType: type // 'notify' ou 'append'
       };
 
-      logger.info(`📩 New message from ${messageData.sender.name} in session ${this.sessionId}`);
+      logger.info(`📩 New ${isFromMe ? 'outgoing' : 'incoming'} message from ${messageData.sender.name} in session ${this.sessionId}`);
 
-      webhookHandler.send({
-        type: 'message',
-        sessionId: this.sessionId,
-        data: messageData,
-        timestamp: new Date()
+      await this.sendWebhook('message', {
+        event: isFromMe ? 'MESSAGE_SENT' : 'MESSAGE_RECEIVED',
+        ...messageData
       });
 
     } catch (error) {
       logger.error(`❌ Error processing message:`, error);
+    }
+  }
+
+  private async handleMessageUpdates(updates: any[]): Promise<void> {
+    try {
+      for (const update of updates) {
+        const statusUpdate = {
+          messageId: update.key?.id,
+          from: update.key?.remoteJid,
+          status: this.getMessageStatus(update),
+          timestamp: new Date()
+        };
+
+        logger.info(`📊 Message status update: ${statusUpdate.status} for message ${statusUpdate.messageId}`);
+
+        await this.sendWebhook('status', {
+          event: 'MESSAGE_STATUS_UPDATE',
+          ...statusUpdate
+        });
+      }
+    } catch (error) {
+      logger.error(`❌ Error handling message updates:`, error);
+    }
+  }
+
+  private getMessageStatus(update: any): string {
+    if (update.update?.messageStubType === 7) return 'read';
+    if (update.update?.status) return update.update.status;
+    return 'unknown';
+  }
+
+  private async handlePresenceUpdate(update: any): Promise<void> {
+    try {
+      const presenceData = {
+        id: update.id,
+        participant: update.participant,
+        lastSeen: update.lastSeen ? new Date(update.lastSeen * 1000) : undefined,
+        isOnline: update.lastKnownPresence === 'available',
+        status: update.lastKnownPresence
+      };
+
+      await this.sendWebhook('presence', {
+        event: 'PRESENCE_UPDATE',
+        ...presenceData
+      });
+
+    } catch (error) {
+      logger.debug(`⚠️ Error handling presence update:`, error);
+    }
+  }
+
+  private async handleGroupUpdates(updates: any[]): Promise<void> {
+    try {
+      for (const update of updates) {
+        await this.sendWebhook('group', {
+          event: 'GROUP_UPDATE',
+          groupId: update.id,
+          subject: update.subject,
+          description: update.description,
+          participants: update.participants?.length,
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      logger.debug(`⚠️ Error handling group updates:`, error);
+    }
+  }
+
+  private async handleContactUpdates(updates: any[]): Promise<void> {
+    try {
+      for (const update of updates) {
+        await this.sendWebhook('presence', {
+          event: 'CONTACT_UPDATE',
+          contactId: update.id,
+          name: update.name,
+          notify: update.notify,
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      logger.debug(`⚠️ Error handling contact updates:`, error);
     }
   }
 
@@ -389,23 +577,60 @@ export class BaileysClient {
 
     switch (messageType) {
       case 'conversation':
-        return { text: messageContent };
+        return { 
+          type: 'text',
+          text: messageContent 
+        };
       case 'imageMessage':
         return {
+          type: 'image',
           text: messageContent?.caption,
-          media: { type: 'image', url: messageContent?.url }
+          mediaUrl: messageContent?.url,
+          mimetype: messageContent?.mimetype
         };
       case 'videoMessage':
         return {
+          type: 'video',
           text: messageContent?.caption,
-          media: { type: 'video', url: messageContent?.url }
+          mediaUrl: messageContent?.url,
+          mimetype: messageContent?.mimetype,
+          duration: messageContent?.seconds
         };
       case 'audioMessage':
-        return { media: { type: 'audio', url: messageContent?.url } };
+        return { 
+          type: 'audio',
+          mediaUrl: messageContent?.url,
+          mimetype: messageContent?.mimetype,
+          duration: messageContent?.seconds,
+          isVoiceNote: messageContent?.ptt
+        };
       case 'documentMessage':
         return {
+          type: 'document',
           text: messageContent?.caption,
-          media: { type: 'document', fileName: messageContent?.fileName, url: messageContent?.url }
+          fileName: messageContent?.fileName,
+          mediaUrl: messageContent?.url,
+          mimetype: messageContent?.mimetype,
+          fileSize: messageContent?.fileLength
+        };
+      case 'stickerMessage':
+        return {
+          type: 'sticker',
+          mediaUrl: messageContent?.url,
+          mimetype: messageContent?.mimetype
+        };
+      case 'buttonsResponseMessage':
+        return {
+          type: 'button_response',
+          selectedButtonId: messageContent?.selectedButtonId,
+          text: messageContent?.selectedDisplayText
+        };
+      case 'listResponseMessage':
+        return {
+          type: 'list_response',
+          title: messageContent?.title,
+          description: messageContent?.description,
+          listType: messageContent?.listType
         };
       default:
         return { type: messageType };
@@ -428,20 +653,24 @@ export class BaileysClient {
 
       logger.info(`📤 Sending message to ${to} from session ${this.sessionId}`);
 
+      // Enviar webhook de início do envio
+      await this.sendWebhook('status', {
+        event: 'MESSAGE_SENDING',
+        to,
+        messageType: content.text ? 'text' : 'media',
+        timestamp: new Date()
+      });
+
       const result = await this.sock.sendMessage(to, content);
       
       await AntiBanHelper.delay(1000);
 
-      webhookHandler.send({
-        type: 'status',
-        sessionId: this.sessionId,
-        data: {
-          event: 'MESSAGE_SENT',
-          messageId: result.key?.id,
-          to,
-          timestamp: new Date()
-        },
-        timestamp: new Date()
+      await this.sendWebhook('status', {
+        event: 'MESSAGE_SENT',
+        messageId: result.key?.id,
+        to,
+        timestamp: new Date(),
+        message: 'Message sent successfully'
       });
 
       logger.info(`✅ Message sent successfully to ${to}`);
@@ -450,6 +679,15 @@ export class BaileysClient {
 
     } catch (error) {
       logger.error(`❌ Failed to send message to ${to}:`, error);
+      
+      await this.sendWebhook('status', {
+        event: 'MESSAGE_FAILED',
+        to,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date(),
+        message: 'Failed to send message'
+      });
+
       await AntiBanHelper.delay(3000);
       throw error;
     }
@@ -474,17 +712,37 @@ export class BaileysClient {
   async logout(): Promise<void> {
     if (this.sock) {
       try {
+        await this.sendWebhook('session', {
+          event: 'LOGGING_OUT',
+          status: 'logging_out',
+          message: 'Logging out from WhatsApp'
+        });
+
         await this.sock.logout();
         this.isConnected = false;
         this.sock = null;
         logger.info(`✅ Session ${this.sessionId} logged out successfully`);
         
+        await this.sendWebhook('session', {
+          event: 'LOGGED_OUT',
+          status: 'logged_out',
+          message: 'Successfully logged out from WhatsApp'
+        });
+
         // Notificar logout
         if (this.onStatusChange) {
           this.onStatusChange('close');
         }
       } catch (error) {
         logger.error(`❌ Error logging out:`, error);
+        
+        await this.sendWebhook('session', {
+          event: 'LOGOUT_FAILED',
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          message: 'Failed to logout from WhatsApp'
+        });
+
         this.isConnected = false;
         this.sock = null;
       }
@@ -497,6 +755,13 @@ export class BaileysClient {
 
   async reconnect(): Promise<void> {
     logger.info(`🔄 Manual reconnect requested for session ${this.sessionId}`);
+    
+    await this.sendWebhook('session', {
+      event: 'MANUAL_RECONNECT',
+      status: 'reconnecting',
+      message: 'Manual reconnection requested'
+    });
+
     if (this.sock) {
       await this.logout();
     }
