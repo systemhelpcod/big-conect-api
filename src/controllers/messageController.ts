@@ -2,12 +2,12 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import axios from 'axios';
 import { sessionManager } from '../core/sessionManager';
 import { IApiResponse, IMessage } from '../types';
 import { logger } from '../utils/logger';
 import { formatJid, isValidPhoneNumber } from '../utils/helpers';
 import { AntiBanHelper } from '../utils/antiBanHelper';
-import { UserAgentHelper } from '../utils/userAgentHelper';
 
 export class MessageController {
   async sendText(req: Request, res: Response) {
@@ -15,7 +15,6 @@ export class MessageController {
       const { sessionId } = req.params;
       const { to, text } = req.body;
 
-      // Validações básicas
       if (!to || !text) {
         const response: IApiResponse = {
           success: false,
@@ -24,7 +23,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação de formato de telefone
       if (!isValidPhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -33,7 +31,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação anti-ban
       if (!AntiBanHelper.validatePhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -42,7 +39,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Verificar limites de mensagens
       const canSend = AntiBanHelper.canSendMessage(sessionId);
       if (!canSend.allowed) {
         const response: IApiResponse = {
@@ -81,9 +77,8 @@ export class MessageController {
   async sendMedia(req: Request, res: Response) {
     try {
       const { sessionId } = req.params;
-      const { to, mediaUrl, type, caption, fileName } = req.body;
+      const { to, mediaUrl, type, caption, fileName, ptt } = req.body;
 
-      // Validações básicas
       if (!to || !mediaUrl || !type) {
         const response: IApiResponse = {
           success: false,
@@ -92,7 +87,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação de formato de telefone
       if (!isValidPhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -101,7 +95,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação anti-ban
       if (!AntiBanHelper.validatePhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -110,7 +103,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Verificar limites de mensagens
       const canSend = AntiBanHelper.canSendMessage(sessionId);
       if (!canSend.allowed) {
         const response: IApiResponse = {
@@ -126,7 +118,6 @@ export class MessageController {
 
       switch (type) {
         case 'image':
-          // Verificar se é um caminho local
           if (this.isLocalPath(mediaUrl)) {
             const absolutePath = this.resolveLocalPath(mediaUrl);
             if (!fs.existsSync(absolutePath)) {
@@ -138,11 +129,11 @@ export class MessageController {
               mimetype: this.getMimeType(absolutePath)
             };
           } else {
-            // É uma URL externa
+            const directUrl = await this.getDirectMediaUrl(mediaUrl);
             messageContent = {
-              image: { url: mediaUrl },
+              image: { url: directUrl },
               caption: caption || '',
-              mimetype: 'image/jpeg'
+              mimetype: this.getMimeTypeFromUrl(directUrl)
             };
           }
           break;
@@ -159,31 +150,52 @@ export class MessageController {
               mimetype: this.getMimeType(absolutePath)
             };
           } else {
+            const directUrl = await this.getDirectMediaUrl(mediaUrl);
             messageContent = {
-              video: { url: mediaUrl },
+              video: { url: directUrl },
               caption: caption || '',
-              mimetype: 'video/mp4'
+              mimetype: this.getMimeTypeFromUrl(directUrl)
             };
           }
           break;
 
         case 'audio':
+          // CORREÇÃO: Sempre enviar como PTT (mensagem de voz) por padrão
+          const shouldBePTT = ptt !== undefined ? ptt : true;
+          
           if (this.isLocalPath(mediaUrl)) {
             const absolutePath = this.resolveLocalPath(mediaUrl);
+            
             if (!fs.existsSync(absolutePath)) {
               throw new Error(`Arquivo de áudio não encontrado: ${absolutePath}`);
             }
+
+            const audioBuffer = await fs.promises.readFile(absolutePath);
+            
+            if (audioBuffer.length > 16 * 1024 * 1024) {
+              throw new Error('Arquivo de áudio muito grande. Máximo 16MB permitido.');
+            }
+
+            const mimetype = this.getMimeType(absolutePath);
+            
             messageContent = {
-              audio: fs.readFileSync(absolutePath),
-              mimetype: this.getMimeType(absolutePath),
-              ptt: req.body.ptt || false
+              audio: audioBuffer,
+              mimetype: mimetype,
+              ptt: shouldBePTT
             };
+
+            logger.info(`Enviando áudio local como ${shouldBePTT ? 'mensagem de voz (PTT)' : 'arquivo de áudio'}`);
+
           } else {
+            const { buffer, finalMimetype } = await this.downloadAndValidateAudio(mediaUrl);
+            
             messageContent = {
-              audio: { url: mediaUrl },
-              mimetype: 'audio/mp4',
-              ptt: req.body.ptt || false
+              audio: buffer,
+              mimetype: finalMimetype,
+              ptt: shouldBePTT
             };
+
+            logger.info(`Enviando áudio URL como ${shouldBePTT ? 'mensagem de voz (PTT)' : 'arquivo de áudio'}`);
           }
           break;
 
@@ -200,11 +212,12 @@ export class MessageController {
               mimetype: this.getMimeType(absolutePath)
             };
           } else {
+            const directUrl = await this.getDirectMediaUrl(mediaUrl);
             messageContent = {
-              document: { url: mediaUrl },
+              document: { url: directUrl },
               caption: caption || '',
               fileName: fileName || 'document',
-              mimetype: req.body.mimetype || 'application/octet-stream'
+              mimetype: this.getMimeTypeFromUrl(directUrl)
             };
           }
           break;
@@ -219,8 +232,9 @@ export class MessageController {
               sticker: fs.readFileSync(absolutePath)
             };
           } else {
+            const directUrl = await this.getDirectMediaUrl(mediaUrl);
             messageContent = {
-              sticker: { url: mediaUrl }
+              sticker: { url: directUrl }
             };
           }
           break;
@@ -240,9 +254,10 @@ export class MessageController {
         data: { 
           messageId: result.key.id,
           timestamp: new Date().toISOString(),
-          type: type
+          type: type,
+          ptt: messageContent.ptt || false
         },
-        message: 'Media message sent successfully'
+        message: `Media message sent successfully as ${messageContent.ptt ? 'voice message' : 'audio file'}`
       };
 
       res.json(response);
@@ -263,7 +278,6 @@ export class MessageController {
       const { sessionId } = req.params;
       const { to, text, buttons, footer, image } = req.body;
 
-      // Validações básicas
       if (!to || !text || !buttons) {
         const response: IApiResponse = {
           success: false,
@@ -272,7 +286,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação de formato de telefone
       if (!isValidPhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -281,7 +294,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação anti-ban
       if (!AntiBanHelper.validatePhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -290,7 +302,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Verificar limites de mensagens
       const canSend = AntiBanHelper.canSendMessage(sessionId);
       if (!canSend.allowed) {
         const response: IApiResponse = {
@@ -301,7 +312,6 @@ export class MessageController {
         return res.status(429).json(response);
       }
 
-      // Validar botões
       if (!Array.isArray(buttons) || buttons.length === 0 || buttons.length > 3) {
         const response: IApiResponse = {
           success: false,
@@ -324,7 +334,6 @@ export class MessageController {
         headerType: 1
       };
 
-      // Adicionar imagem se fornecida
       if (image && image.url) {
         if (this.isLocalPath(image.url)) {
           const absolutePath = this.resolveLocalPath(image.url);
@@ -333,9 +342,10 @@ export class MessageController {
           }
           messageContent.image = fs.readFileSync(absolutePath);
         } else {
-          messageContent.image = { url: image.url };
+          const directUrl = await this.getDirectMediaUrl(image.url);
+          messageContent.image = { url: directUrl };
         }
-        messageContent.headerType = 4; // Header type for image
+        messageContent.headerType = 4;
       }
 
       const result = await sessionManager.sendMessage(sessionId, jid, messageContent);
@@ -368,7 +378,6 @@ export class MessageController {
       const { sessionId } = req.params;
       const { to, template } = req.body;
 
-      // Validações básicas
       if (!to || !template) {
         const response: IApiResponse = {
           success: false,
@@ -377,7 +386,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação de formato de telefone
       if (!isValidPhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -386,7 +394,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação anti-ban
       if (!AntiBanHelper.validatePhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -395,7 +402,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Verificar limites de mensagens
       const canSend = AntiBanHelper.canSendMessage(sessionId);
       if (!canSend.allowed) {
         const response: IApiResponse = {
@@ -436,7 +442,6 @@ export class MessageController {
       const { sessionId } = req.params;
       const { messages, delayBetweenMessages = 2000 } = req.body;
 
-      // Validações básicas
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         const response: IApiResponse = {
           success: false,
@@ -445,7 +450,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Limitar quantidade de mensagens em massa
       if (messages.length > 50) {
         const response: IApiResponse = {
           success: false,
@@ -459,13 +463,11 @@ export class MessageController {
 
       for (const [index, message] of messages.entries()) {
         try {
-          // Delay entre mensagens em massa (com comportamento humano)
           if (index > 0) {
             const safeDelay = AntiBanHelper.getSafeMessageInterval();
             await AntiBanHelper.delay(safeDelay);
           }
 
-          // Verificar limites a cada mensagem
           const canSend = AntiBanHelper.canSendMessage(sessionId);
           if (!canSend.allowed) {
             failed.push({
@@ -477,7 +479,6 @@ export class MessageController {
             continue;
           }
 
-          // Validação anti-ban para cada número
           if (!AntiBanHelper.validatePhoneNumber(message.to)) {
             failed.push({
               to: message.to,
@@ -491,7 +492,6 @@ export class MessageController {
           const jid = formatJid(message.to);
           let messageContent: any;
 
-          // Determinar o tipo de conteúdo da mensagem
           if (message.text && !message.media) {
             messageContent = { text: message.text };
           } else if (message.media) {
@@ -507,8 +507,9 @@ export class MessageController {
                     caption: message.media.caption || ''
                   };
                 } else {
+                  const directUrl = await this.getDirectMediaUrl(message.media.url);
                   messageContent = {
-                    image: { url: message.media.url },
+                    image: { url: directUrl },
                     caption: message.media.caption || ''
                   };
                 }
@@ -524,24 +525,41 @@ export class MessageController {
                     caption: message.media.caption || ''
                   };
                 } else {
+                  const directUrl = await this.getDirectMediaUrl(message.media.url);
                   messageContent = {
-                    video: { url: message.media.url },
+                    video: { url: directUrl },
                     caption: message.media.caption || ''
                   };
                 }
                 break;
               case 'audio':
+                const bulkPTT = message.media.ptt !== undefined ? message.media.ptt : true;
+                
                 if (this.isLocalPath(message.media.url)) {
                   const absolutePath = this.resolveLocalPath(message.media.url);
+                  
                   if (!fs.existsSync(absolutePath)) {
                     throw new Error(`Arquivo de áudio não encontrado: ${absolutePath}`);
                   }
+
+                  const audioBuffer = await fs.promises.readFile(absolutePath);
+                  
+                  if (audioBuffer.length > 16 * 1024 * 1024) {
+                    throw new Error('Arquivo de áudio muito grande. Máximo 16MB permitido.');
+                  }
+
                   messageContent = {
-                    audio: fs.readFileSync(absolutePath)
+                    audio: audioBuffer,
+                    mimetype: this.getMimeType(absolutePath),
+                    ptt: bulkPTT
                   };
                 } else {
+                  const { buffer, finalMimetype } = await this.downloadAndValidateAudio(message.media.url);
+                  
                   messageContent = {
-                    audio: { url: message.media.url }
+                    audio: buffer,
+                    mimetype: finalMimetype,
+                    ptt: bulkPTT
                   };
                 }
                 break;
@@ -557,8 +575,9 @@ export class MessageController {
                     fileName: message.media.fileName || path.basename(absolutePath)
                   };
                 } else {
+                  const directUrl = await this.getDirectMediaUrl(message.media.url);
                   messageContent = {
-                    document: { url: message.media.url },
+                    document: { url: directUrl },
                     caption: message.media.caption || '',
                     fileName: message.media.fileName || 'document'
                   };
@@ -607,7 +626,6 @@ export class MessageController {
 
           logger.error(`Error in bulk message ${index + 1} to ${message.to}:`, error);
 
-          // Se falhar muitas vezes consecutivas, parar o processo
           if (failed.length >= 5 && failed.slice(-5).every(f => f.status === 'failed')) {
             logger.warn('Stopping bulk send due to multiple consecutive failures');
             break;
@@ -649,7 +667,6 @@ export class MessageController {
       const { sessionId } = req.params;
       const { to, text, buttonText, sections, title, footer } = req.body;
 
-      // Validações básicas
       if (!to || !text || !buttonText || !sections) {
         const response: IApiResponse = {
           success: false,
@@ -658,7 +675,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação de formato de telefone
       if (!isValidPhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -667,7 +683,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Validação anti-ban
       if (!AntiBanHelper.validatePhoneNumber(to)) {
         const response: IApiResponse = {
           success: false,
@@ -676,7 +691,6 @@ export class MessageController {
         return res.status(400).json(response);
       }
 
-      // Verificar limites de mensagens
       const canSend = AntiBanHelper.canSendMessage(sessionId);
       if (!canSend.allowed) {
         const response: IApiResponse = {
@@ -726,7 +740,6 @@ export class MessageController {
       const { sessionId } = req.params;
       const { to, messageId, reaction } = req.body;
 
-      // Validações básicas
       if (!to || !messageId) {
         const response: IApiResponse = {
           success: false,
@@ -770,7 +783,72 @@ export class MessageController {
     }
   }
 
-  // Helper methods para lidar com arquivos locais
+  // Método para download e validação de áudio
+  private async downloadAndValidateAudio(url: string): Promise<{ buffer: Buffer; finalMimetype: string }> {
+    try {
+      logger.info(`Downloading audio from URL: ${url}`);
+      
+      const directUrl = await this.getDirectMediaUrl(url);
+      
+      const response = await axios.get(directUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000,
+        maxContentLength: 16 * 1024 * 1024,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+
+      const buffer = Buffer.from(response.data);
+      
+      if (buffer.length > 16 * 1024 * 1024) {
+        throw new Error('Arquivo de áudio muito grande. Máximo 16MB permitido.');
+      }
+
+      if (buffer.length < 100) {
+        throw new Error('Arquivo de áudio muito pequeno ou inválido');
+      }
+
+      let finalMimetype = this.getMimeTypeFromUrl(directUrl);
+      
+      if (this.isValidAudioBuffer(buffer, finalMimetype)) {
+        logger.info(`Audio downloaded successfully: ${buffer.length} bytes, mimetype: ${finalMimetype}`);
+        return { buffer, finalMimetype };
+      } else {
+        throw new Error('Arquivo não é um áudio válido ou formato não suportado');
+      }
+
+    } catch (error: any) {
+      logger.error(`Error downloading audio from ${url}:`, error);
+      throw new Error(`Falha ao baixar áudio: ${error.message}`);
+    }
+  }
+
+  // Validar se é um arquivo de áudio válido
+  private isValidAudioBuffer(buffer: Buffer, mimetype: string): boolean {
+    if (buffer.length < 10) return false;
+
+    const header = buffer.slice(0, 8).toString('hex');
+    
+    // WAV: RIFF header
+    if (header.startsWith('52494646') && mimetype.includes('wav')) {
+      return true;
+    }
+    
+    // MP3: ID3 header ou FF FB (MPEG)
+    if ((header.startsWith('494433') || buffer.slice(0, 2).toString('hex') === 'fffb') && mimetype.includes('mpeg')) {
+      return true;
+    }
+    
+    // OGG: OggS header
+    if (header.startsWith('4f676753') && mimetype.includes('ogg')) {
+      return true;
+    }
+
+    // Se não reconhecer o header, confia no mimetype
+    return mimetype.startsWith('audio/');
+  }
+
   private isLocalPath(url: string): boolean {
     return !url.startsWith('http://') && 
            !url.startsWith('https://') && 
@@ -778,17 +856,14 @@ export class MessageController {
   }
 
   private resolveLocalPath(filePath: string): string {
-    // Se for um caminho relativo, resolve a partir do diretório do projeto
     if (filePath.startsWith('./') || filePath.startsWith('../')) {
       return path.resolve(process.cwd(), filePath);
     }
     
-    // Se for um caminho absoluto, usa diretamente
     if (path.isAbsolute(filePath)) {
       return filePath;
     }
     
-    // Para caminhos sem prefixo, assume que está na pasta Imagem-exemplos
     return path.resolve(process.cwd(), 'Imagem-exemplos', filePath);
   }
 
@@ -806,11 +881,81 @@ export class MessageController {
       '.mp3': 'audio/mpeg',
       '.wav': 'audio/wav',
       '.ogg': 'audio/ogg',
+      '.aac': 'audio/aac',
+      '.m4a': 'audio/mp4',
+      '.flac': 'audio/flac',
+      '.amr': 'audio/amr',
+      '.opus': 'audio/opus',
+      '.weba': 'audio/webm',
       '.pdf': 'application/pdf',
       '.doc': 'application/msword',
       '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     };
     
     return mimeTypes[ext] || 'application/octet-stream';
+  }
+
+  private getMimeTypeFromUrl(url: string): string {
+    const ext = path.extname(url.split('?')[0]).toLowerCase();
+    const mimeTypes: { [key: string]: string } = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.mp4': 'video/mp4',
+      '.avi': 'video/x-msvideo',
+      '.mov': 'video/quicktime',
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.ogg': 'audio/ogg',
+      '.aac': 'audio/aac',
+      '.m4a': 'audio/mp4',
+      '.flac': 'audio/flac',
+      '.amr': 'audio/amr',
+      '.opus': 'audio/opus',
+      '.weba': 'audio/webm',
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    };
+    
+    return mimeTypes[ext] || 'application/octet-stream';
+  }
+
+  private async getDirectMediaUrl(url: string): Promise<string> {
+    try {
+      if (url.includes('raw.githubusercontent.com') || 
+          url.includes('cdn.discordapp.com') ||
+          url.includes('i.imgur.com') ||
+          url.match(/\.(jpg|jpeg|png|gif|webp|mp4|avi|mov|mp3|wav|ogg|aac|m4a|flac|amr|opus|weba|pdf)(\?.*)?$/i)) {
+        return url;
+      }
+
+      if (url.includes('github.com') && url.includes('/blob/')) {
+        return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+      }
+
+      if (url.includes('github.com') && url.includes('/wavs/')) {
+        return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+      }
+
+      const response = await axios.head(url, {
+        timeout: 5000,
+        validateStatus: (status) => status < 400
+      });
+
+      const contentType = response.headers['content-type'];
+      
+      if (contentType && contentType.includes('text/html')) {
+        logger.warn(`URL parece ser uma página HTML, não uma mídia direta: ${url}`);
+      }
+
+      return url;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      logger.warn(`Não foi possível verificar a URL ${url}, usando como está:`, errorMessage);
+      return url;
+    }
   }
 }
