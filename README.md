@@ -1,8 +1,29 @@
 # 🌐 **API BIG CONECT - Documentação Completa**
 
+<div align="center">
+
+![Big Conect Logo](https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png)
+
+**Solução Profissional de Automação WhatsApp Business**
+
+[![CNPJ](https://img.shields.io/badge/CNPJ-48.590.314/0001--18-blue)](https://receitaws.com.br/cnpj/48590314000118)
+[![WhatsApp API](https://img.shields.io/badge/WhatsApp-API-green)](https://github.com/systemhelpcod/big-conect-api)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+*Sua solução completa para automação WhatsApp Business*
+
+</div>
+
 ## 🚀 **O QUE É A API BIG CONECT?**
 
-A **API Big Conect** é uma solução completa de automação para WhatsApp baseada na biblioteca **Baileys** e no fork **whaileys**, desenvolvida para fornecer uma interface REST robusta e confiável para integração com o WhatsApp Web.
+A **API Big Conect** é uma solução profissional de automação para WhatsApp desenvolvida pela **System Help Cod** (CNPJ: 48.590.314/0001-18), baseada nas bibliotecas **Baileys** e **whaileys**. Fornecemos uma interface REST robusta e confiável para integração empresarial com o WhatsApp Web.
+
+### 🏢 **SOBRE A EMPRESA**
+- **Razão Social**: System Help Cod
+- **CNPJ**: 48.590.314/0001-18
+- **Segmento**: Desenvolvimento de Software e Soluções em TI
+- **Especialidade**: APIs de comunicação e automação
 
 ### ⚠️ **AVISO IMPORTANTE**
 Esta é uma **API não-oficial** do WhatsApp. Utilize com responsabilidade e respeite os limites de uso para evitar bloqueios. Recomendamos uso para:
@@ -10,6 +31,26 @@ Esta é uma **API não-oficial** do WhatsApp. Utilize com responsabilidade e res
 - Sistemas de notificação
 - Integração com CRM/ERP
 - Automação de atendimento
+
+---
+
+## 💝 **APOIE ESTE PROJETO**
+
+Este projeto é mantido com dedicação pela **System Help Cod**. Se nossa API está sendo útil para seu negócio, considere fazer uma doação:
+
+### **📱 CHAVE PIX: CNPJ**
+```
+48.590.314/0001-18
+```
+
+**Como doar:**
+1. Abra seu app bancário
+2. Acesse a área PIX
+3. Escolha "Pagar com PIX Copia e Cola"
+4. Cole a chave acima
+5. Qualquer valor é bem-vindo! ❤️
+
+*Sua doação ajuda a manter e melhorar esta API gratuitamente para a comunidade.*
 
 ---
 
@@ -87,9 +128,9 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "Content-Type: application/json" \
   -d '{
     "to": "5511999999999",
-    "mediaUrl": "https://example.com/image.jpg",
+    "mediaUrl": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png",
     "type": "image",
-    "caption": "Imagem enviada via API! 🖼️"
+    "caption": "Logo Big Conect 🖼️"
   }'
 ```
 
@@ -113,12 +154,14 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
     "to": "5511999999999",
     "mediaUrl": "https://example.com/audio.mp3",
     "type": "audio",
-    "ptt": true
+    "ptt": true,
+    "forceOpus": true
   }'
 ```
 
-**📌 Parâmetro `ptt` (Push-to-Talk):**
+**📌 Parâmetros de Áudio:**
 - `"ptt": true` → **Envia como mensagem de voz** (recomendado)
+- `"forceOpus": true` → **Conversão para melhor qualidade**
 - `"ptt": false` → Envia como arquivo de áudio normal
 
 **🎯 Formatos Suportados:**
@@ -158,7 +201,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
   }'
 ```
 
-### **13. Mensagem com Botões e Imagem**
+### **13. Mensagem com Botões e Imagem** 🖼️
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
   -H "Content-Type: application/json" \
@@ -171,7 +214,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
       {"id": "menu3", "text": "ℹ️ Informações"}
     ],
     "image": {
-      "url": "https://example.com/menu-image.jpg"
+      "url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png"
     },
     "footer": "Restaurante Exemplo"
   }'
@@ -296,7 +339,8 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
     "to": "5511999999999",
     "mediaUrl": "https://exemplo.com/boas-vindas.mp3",
     "type": "audio",
-    "ptt": true
+    "ptt": true,
+    "forceOpus": true
   }'
 ```
 
@@ -307,6 +351,25 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -d '{
     "to": "5511999999999", 
     "text": "🔔 *LEMBRETE IMPORTANTE*\n\n💊 Hora de tomar seu remédio\n⏰ Próxima dose: 20:00\n\n🏥 Não se esqueça da sua saúde! 💙"
+  }'
+```
+
+### **Cardápio Digital com Logo**
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "5511999999999",
+    "text": "🍕 Cardápio Digital Big Conect",
+    "buttons": [
+      {"id": "pizzas", "text": "🍕 Pizzas"},
+      {"id": "bebidas", "text": "🥤 Bebidas"},
+      {"id": "promocoes", "text": "🎉 Promoções"}
+    ],
+    "image": {
+      "url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png"
+    },
+    "footer": "Faça seu pedido via WhatsApp!"
   }'
 ```
 
@@ -383,9 +446,10 @@ LOG_LEVEL=debug
     "messageId": "3EB0C3C04A87168A8F130E",
     "timestamp": "2025-11-19T14:53:24.226Z",
     "type": "audio",
-    "ptt": true
+    "ptt": true,
+    "convertedToOpus": true
   },
-  "message": "Media message sent successfully as voice message"
+  "message": "Audio message sent successfully as voice message"
 }
 ```
 
@@ -418,6 +482,7 @@ LOG_LEVEL=debug
 
 ### **🎵 Dicas de Áudio:**
 - Use `"ptt": true` para melhor entrega de áudios
+- Use `"forceOpus": true` para conversão otimizada
 - Formatos nativos (AMR, M4A) têm melhor compatibilidade
 - Áudios curtos (até 10 minutos) têm melhor performance
 
@@ -445,6 +510,7 @@ LOG_LEVEL=debug
 - ✅ **Logs detalhados** - Monitoramento completo em tempo real
 - ✅ **Envio de áudio otimizado** - Suporte a mensagens de voz PTT
 - ✅ **API REST moderna** - Documentação completa e exemplos práticos
+- ✅ **Suporte empresarial** - Desenvolvido por empresa registrada (CNPJ)
 
 ### **🛠 Para Desenvolvedores:**
 - **Documentação completa** com exemplos práticos
@@ -470,6 +536,36 @@ LOG_LEVEL=debug
 
 ---
 
-**🚀 API Big Conect - Sua solução completa e confiável para automação WhatsApp Business!**
+## 💼 **INFORMAÇÕES EMPRESARIAIS**
 
-*Baseada nas melhores bibliotecas open-source do mercado, desenvolvida para performance e estabilidade em ambientes produtivos.*
+**System Help Cod**  
+**CNPJ**: 48.590.314/0001-18  
+**Segmento**: Desenvolvimento de Software e Soluções em TI
+
+### **📞 Contato & Suporte:**
+- **Documentação**: [GitHub Repository](https://github.com/systemhelpcod/big-conect-api)
+- **Issues**: [GitHub Issues](https://github.com/systemhelpcod/big-conect-api/issues)
+- **Doações PIX**: `48.590.314/0001-18`
+
+### **🤝 APOIE ESTE PROJETO:**
+Este projeto é mantido gratuitamente para a comunidade. Sua doação via PIX ajuda a:
+- Manter servidores e infraestrutura
+- Desenvolver novas funcionalidades
+- Oferecer suporte técnico gratuito
+- Manter a API atualizada e segura
+
+**Chave PIX CNPJ:** `48.590.314/0001-18`
+
+---
+
+<div align="center">
+
+**🚀 API Big Conect - Desenvolvido com ❤️ por System Help Cod**
+
+*Solução profissional para automação WhatsApp Business*
+
+[![CNPJ](https://img.shields.io/badge/CNPJ-48.590.314/0001--18-blue)](https://receitaws.com.br/cnpj/48590314000118)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black)](https://github.com/systemhelpcod/big-conect-api)
+[![PIX](https://img.shields.io/badge/Doação-PIX-green)](https://nubank.com.br/pagar)
+
+</div>
