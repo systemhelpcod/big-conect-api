@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/biglogo.jpeg" alt="Big Conect Logo" width="200" height="200" />
+<img src="https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos//logoapi.jpeg" alt="Big Conect Logo" width="200" height="200" />
 
 **Solução Profissional de Automação WhatsApp Business**
 
