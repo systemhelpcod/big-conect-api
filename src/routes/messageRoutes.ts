@@ -11,12 +11,27 @@ const rateLimitMiddleware = (req: any, res: any, next: any) => {
   next();
 };
 
+// ========== ROTAS DE MENSAGENS ==========
+
+// Mensagem de texto simples
 router.post('/:sessionId/messages/text', rateLimitMiddleware, messageController.sendText.bind(messageController));
+
+// Mensagens de mídia (audio, video, image, document, sticker)
 router.post('/:sessionId/messages/media', rateLimitMiddleware, messageController.sendMedia.bind(messageController));
+
+// Mensagens interativas com botões
 router.post('/:sessionId/messages/buttons', rateLimitMiddleware, messageController.sendButtons.bind(messageController));
+
+// Mensagens de template
 router.post('/:sessionId/messages/template', rateLimitMiddleware, messageController.sendTemplate.bind(messageController));
+
+// Mensagens em massa (bulk)
 router.post('/:sessionId/messages/bulk', rateLimitMiddleware, messageController.sendBulkMessages.bind(messageController));
+
+// Mensagens com lista
 router.post('/:sessionId/messages/list', rateLimitMiddleware, messageController.sendListMessage.bind(messageController));
+
+// Reações a mensagens
 router.post('/:sessionId/messages/reaction', rateLimitMiddleware, messageController.sendReaction.bind(messageController));
 
 export default router;
