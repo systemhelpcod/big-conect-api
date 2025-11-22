@@ -1,5 +1,7 @@
 // /root/api/big2/beta/api-big-conect/src/controllers/messageController.ts
 import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { sessionManager } from '../core/sessionManager';
 import { IApiResponse, IMessage } from '../types';
 import { logger } from '../utils/logger';
@@ -124,39 +126,105 @@ export class MessageController {
 
       switch (type) {
         case 'image':
-          messageContent = {
-            image: { url: mediaUrl },
-            caption: caption || '',
-            mimetype: 'image/jpeg'
-          };
+          // Verificar se é um caminho local
+          if (this.isLocalPath(mediaUrl)) {
+            const absolutePath = this.resolveLocalPath(mediaUrl);
+            if (!fs.existsSync(absolutePath)) {
+              throw new Error(`Arquivo de imagem não encontrado: ${absolutePath}`);
+            }
+            messageContent = {
+              image: fs.readFileSync(absolutePath),
+              caption: caption || '',
+              mimetype: this.getMimeType(absolutePath)
+            };
+          } else {
+            // É uma URL externa
+            messageContent = {
+              image: { url: mediaUrl },
+              caption: caption || '',
+              mimetype: 'image/jpeg'
+            };
+          }
           break;
+
         case 'video':
-          messageContent = {
-            video: { url: mediaUrl },
-            caption: caption || '',
-            mimetype: 'video/mp4'
-          };
+          if (this.isLocalPath(mediaUrl)) {
+            const absolutePath = this.resolveLocalPath(mediaUrl);
+            if (!fs.existsSync(absolutePath)) {
+              throw new Error(`Arquivo de vídeo não encontrado: ${absolutePath}`);
+            }
+            messageContent = {
+              video: fs.readFileSync(absolutePath),
+              caption: caption || '',
+              mimetype: this.getMimeType(absolutePath)
+            };
+          } else {
+            messageContent = {
+              video: { url: mediaUrl },
+              caption: caption || '',
+              mimetype: 'video/mp4'
+            };
+          }
           break;
+
         case 'audio':
-          messageContent = {
-            audio: { url: mediaUrl },
-            mimetype: 'audio/mp4',
-            ptt: req.body.ptt || false
-          };
+          if (this.isLocalPath(mediaUrl)) {
+            const absolutePath = this.resolveLocalPath(mediaUrl);
+            if (!fs.existsSync(absolutePath)) {
+              throw new Error(`Arquivo de áudio não encontrado: ${absolutePath}`);
+            }
+            messageContent = {
+              audio: fs.readFileSync(absolutePath),
+              mimetype: this.getMimeType(absolutePath),
+              ptt: req.body.ptt || false
+            };
+          } else {
+            messageContent = {
+              audio: { url: mediaUrl },
+              mimetype: 'audio/mp4',
+              ptt: req.body.ptt || false
+            };
+          }
           break;
+
         case 'document':
-          messageContent = {
-            document: { url: mediaUrl },
-            caption: caption || '',
-            fileName: fileName || 'document',
-            mimetype: req.body.mimetype || 'application/octet-stream'
-          };
+          if (this.isLocalPath(mediaUrl)) {
+            const absolutePath = this.resolveLocalPath(mediaUrl);
+            if (!fs.existsSync(absolutePath)) {
+              throw new Error(`Arquivo de documento não encontrado: ${absolutePath}`);
+            }
+            messageContent = {
+              document: fs.readFileSync(absolutePath),
+              caption: caption || '',
+              fileName: fileName || path.basename(absolutePath),
+              mimetype: this.getMimeType(absolutePath)
+            };
+          } else {
+            messageContent = {
+              document: { url: mediaUrl },
+              caption: caption || '',
+              fileName: fileName || 'document',
+              mimetype: req.body.mimetype || 'application/octet-stream'
+            };
+          }
           break;
+
         case 'sticker':
-          messageContent = {
-            sticker: { url: mediaUrl }
-          };
+          if (this.isLocalPath(mediaUrl)) {
+            const absolutePath = this.resolveLocalPath(mediaUrl);
+            if (!fs.existsSync(absolutePath)) {
+              throw new Error(`Arquivo de sticker não encontrado: ${absolutePath}`);
+            }
+            messageContent = {
+              sticker: fs.readFileSync(absolutePath)
+            };
+          } else {
+            messageContent = {
+              sticker: { url: mediaUrl }
+            };
+          }
           break;
+
         default:
           const response: IApiResponse = {
             success: false,
@@ -258,7 +326,15 @@ export class MessageController {
 
       // Adicionar imagem se fornecida
       if (image && image.url) {
-        messageContent.image = { url: image.url };
+        if (this.isLocalPath(image.url)) {
+          const absolutePath = this.resolveLocalPath(image.url);
+          if (!fs.existsSync(absolutePath)) {
+            throw new Error(`Arquivo de imagem não encontrado: ${absolutePath}`);
+          }
+          messageContent.image = fs.readFileSync(absolutePath);
+        } else {
+          messageContent.image = { url: image.url };
+        }
         messageContent.headerType = 4; // Header type for image
       }
 
@@ -421,28 +497,72 @@ export class MessageController {
           } else if (message.media) {
             switch (message.media.type) {
               case 'image':
-                messageContent = {
-                  image: { url: message.media.url },
-                  caption: message.media.caption || ''
-                };
+                if (this.isLocalPath(message.media.url)) {
+                  const absolutePath = this.resolveLocalPath(message.media.url);
+                  if (!fs.existsSync(absolutePath)) {
+                    throw new Error(`Arquivo de imagem não encontrado: ${absolutePath}`);
+                  }
+                  messageContent = {
+                    image: fs.readFileSync(absolutePath),
+                    caption: message.media.caption || ''
+                  };
+                } else {
+                  messageContent = {
+                    image: { url: message.media.url },
+                    caption: message.media.caption || ''
+                  };
+                }
                 break;
               case 'video':
-                messageContent = {
-                  video: { url: message.media.url },
-                  caption: message.media.caption || ''
-                };
+                if (this.isLocalPath(message.media.url)) {
+                  const absolutePath = this.resolveLocalPath(message.media.url);
+                  if (!fs.existsSync(absolutePath)) {
+                    throw new Error(`Arquivo de vídeo não encontrado: ${absolutePath}`);
+                  }
+                  messageContent = {
+                    video: fs.readFileSync(absolutePath),
+                    caption: message.media.caption || ''
+                  };
+                } else {
+                  messageContent = {
+                    video: { url: message.media.url },
+                    caption: message.media.caption || ''
+                  };
+                }
                 break;
               case 'audio':
-                messageContent = {
-                  audio: { url: message.media.url }
-                };
+                if (this.isLocalPath(message.media.url)) {
+                  const absolutePath = this.resolveLocalPath(message.media.url);
+                  if (!fs.existsSync(absolutePath)) {
+                    throw new Error(`Arquivo de áudio não encontrado: ${absolutePath}`);
+                  }
+                  messageContent = {
+                    audio: fs.readFileSync(absolutePath)
+                  };
+                } else {
+                  messageContent = {
+                    audio: { url: message.media.url }
+                  };
+                }
                 break;
               case 'document':
-                messageContent = {
-                  document: { url: message.media.url },
-                  caption: message.media.caption || '',
-                  fileName: message.media.fileName || 'document'
-                };
+                if (this.isLocalPath(message.media.url)) {
+                  const absolutePath = this.resolveLocalPath(message.media.url);
+                  if (!fs.existsSync(absolutePath)) {
+                    throw new Error(`Arquivo de documento não encontrado: ${absolutePath}`);
+                  }
+                  messageContent = {
+                    document: fs.readFileSync(absolutePath),
+                    caption: message.media.caption || '',
+                    fileName: message.media.fileName || path.basename(absolutePath)
+                  };
+                } else {
+                  messageContent = {
+                    document: { url: message.media.url },
+                    caption: message.media.caption || '',
+                    fileName: message.media.fileName || 'document'
+                  };
+                }
                 break;
               default:
                 throw new Error(`Unsupported media type: ${message.media.type}`);
@@ -648,5 +768,49 @@ export class MessageController {
       
       res.status(500).json(response);
     }
+  }
+
+  // Helper methods para lidar com arquivos locais
+  private isLocalPath(url: string): boolean {
+    return !url.startsWith('http://') && 
+           !url.startsWith('https://') && 
+           !url.startsWith('data:');
+  }
+
+  private resolveLocalPath(filePath: string): string {
+    // Se for um caminho relativo, resolve a partir do diretório do projeto
+    if (filePath.startsWith('./') || filePath.startsWith('../')) {
+      return path.resolve(process.cwd(), filePath);
+    }
+    
+    // Se for um caminho absoluto, usa diretamente
+    if (path.isAbsolute(filePath)) {
+      return filePath;
+    }
+    
+    // Para caminhos sem prefixo, assume que está na pasta Imagem-exemplos
+    return path.resolve(process.cwd(), 'Imagem-exemplos', filePath);
+  }
+
+  private getMimeType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes: { [key: string]: string } = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.mp4': 'video/mp4',
+      '.avi': 'video/x-msvideo',
+      '.mov': 'video/quicktime',
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.ogg': 'audio/ogg',
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    };
+    
+    return mimeTypes[ext] || 'application/octet-stream';
   }
 }
