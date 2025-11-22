@@ -88,10 +88,10 @@ npm run dev
 
 ## 🚀 **O QUE É A API BIG CONECT?**
 
-A **API Big Conect** é uma solução profissional de automação para WhatsApp desenvolvida pela **System Help Cod** (CNPJ: 48.590.314/0001-18), baseada nas bibliotecas **Baileys** e **whaileys**. Fornecemos uma interface REST robusta e confiável para integração empresarial com o WhatsApp Web.
+A **API Big Conect** é uma solução profissional de automação para WhatsApp desenvolvida pela **System Help** (CNPJ: 48.590.314/0001-18), baseada nas bibliotecas **Baileys** e **whaileys**. Fornecemos uma interface REST robusta e confiável para integração empresarial com o WhatsApp Web.
 
 ### 🏢 **SOBRE A EMPRESA**
-- **Razão Social**: System Help Cod
+- **Razão Social**: System Help
 - **CNPJ**: 48.590.314/0001-18
 - **Segmento**: Desenvolvimento de Software e Soluções em TI
 - **Especialidade**: APIs de comunicação e automação
@@ -107,7 +107,7 @@ Esta é uma **API não-oficial** do WhatsApp. Utilize com responsabilidade e res
 
 ## 💝 **APOIE ESTE PROJETO**
 
-Este projeto é mantido com dedicação pela **System Help Cod**. Se nossa API está sendo útil para seu negócio, considere fazer uma doação:
+Este projeto é mantido com dedicação pela **System Help**. Se nossa API está sendo útil para seu negócio, considere fazer uma doação:
 
 ### **📱 CHAVE PIX: CNPJ**
 ```
@@ -617,7 +617,7 @@ ALLOWED_ORIGINS=*
 
 ## 💼 **INFORMAÇÕES EMPRESARIAIS**
 
-**System Help Cod**  
+**System Help**  
 **CNPJ**: 48.590.314/0001-18  
 **Segmento**: Desenvolvimento de Software e Soluções em TI
 
@@ -639,7 +639,7 @@ Este projeto é mantido gratuitamente para a comunidade. Sua doação via PIX aj
 
 <div align="center">
 
-**🚀 API Big Conect - Desenvolvido com ❤️ por System Help Cod**
+**🚀 API Big Conect - Desenvolvido com ❤️ por System Help**
 
 *Solução profissional para automação WhatsApp Business*
 
