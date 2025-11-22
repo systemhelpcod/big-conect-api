@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos//logoapi.jpeg" alt="Big Conect Logo" width="200" height="200" />
+<img src="https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logoapi.jpeg" alt="Big Conect Logo" width="200" height="200" />
 
 **Solução Profissional de Automação WhatsApp Business**
 
@@ -14,6 +14,77 @@
 *Sua solução completa para automação WhatsApp Business*
 
 </div>
+
+## 🚀 **INSTALAÇÃO RÁPIDA**
+
+### **Pré-requisitos**
+- Node.js 16+ instalado
+- Git instalado
+- WhatsApp no celular para escanear QR Code
+
+### **Passo a Passo para Instalação**
+
+#### **1. Clone o repositório**
+```bash
+git clone https://github.com/systemhelpcod/big-conect-api.git
+cd big-conect-api
+```
+
+#### **2. Configure as variáveis de ambiente**
+```bash
+# Copie o arquivo de exemplo
+cp .env-exemplo .env
+
+# Edite o arquivo .env com suas configurações
+nano .env  # ou use seu editor preferido
+```
+
+**Conteúdo do arquivo `.env`:**
+```env
+NODE_ENV=development
+PORT=9009
+IPV4=127.0.0.1
+IPV6=
+DOMAIN_SSL=
+VIEW_QRCODE_TERMINAL=1
+PATCH_TOKENS=./sessions
+DEVICE_NAME=Big-Conect-API
+HOST_NAME=BigConectAPI
+WA_VERSION=
+WA_URL=
+AUTO_CLOSE=15
+SECRET_KEY=123456789
+WEBHOOK_URL=http://urldoseuweb:200/webhook-test/api
+LOG_LEVEL=debug
+ALLOWED_ORIGINS=*
+```
+
+#### **3. Instale as dependências**
+```bash
+npm install
+```
+
+#### **4. Em caso de erro na instalação:**
+```bash
+# Remova node_modules e package-lock.json
+rm -rf node_modules package-lock.json
+
+# Reinstale as dependências
+npm install
+```
+
+#### **5. Execute a API**
+```bash
+npm run dev
+```
+
+#### **6. Configure a sessão WhatsApp**
+1. Acesse `http://127.0.0.1:9009/api/sessions` para criar uma sessão
+2. Obtenha o QR Code em `http://127.0.0.1:9009/api/sessions/{sessionId}/qr`
+3. Escaneie com o WhatsApp (Dispositivos Conectados)
+4. Pronto! Sua API está funcionando 🎉
+
+---
 
 ## 🚀 **O QUE É A API BIG CONECT?**
 
@@ -128,7 +199,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "Content-Type: application/json" \
   -d '{
     "to": "5511999999999",
-    "mediaUrl": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png",
+    "mediaUrl": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logoapi.jpeg",
     "type": "image",
     "caption": "Logo Big Conect 🖼️"
   }'
@@ -214,7 +285,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
       {"id": "menu3", "text": "ℹ️ Informações"}
     ],
     "image": {
-      "url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png"
+      "url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logoapi.jpeg"
     },
     "footer": "Restaurante Exemplo"
   }'
@@ -367,7 +438,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
       {"id": "promocoes", "text": "🎉 Promoções"}
     ],
     "image": {
-      "url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logo.png"
+      "url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logoapi.jpeg"
     },
     "footer": "Faça seu pedido via WhatsApp!"
   }'
@@ -396,11 +467,19 @@ curl http://127.0.0.1:9009/
 NODE_ENV=development
 PORT=9009
 IPV4=127.0.0.1
+IPV6=
+DOMAIN_SSL=
 VIEW_QRCODE_TERMINAL=1
 PATCH_TOKENS=./sessions
 DEVICE_NAME=Big-Conect-API
-WEBHOOK_URL=https://seu-webhook.com/api
+HOST_NAME=BigConectAPI
+WA_VERSION=
+WA_URL=
+AUTO_CLOSE=15
+SECRET_KEY=123456789
+WEBHOOK_URL=http://urldoseuweb:200/webhook-test/api
 LOG_LEVEL=debug
+ALLOWED_ORIGINS=*
 ```
 
 ---
