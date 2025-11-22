@@ -1,0 +1,1862 @@
+{
+  "name": "BIG API EXEMPLO",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        -112
+      ],
+      "id": "ce78870a-abd4-4263-9be8-b82738beb2be",
+      "name": "inicio",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        -112
+      ],
+      "id": "11a96123-7a0b-4ad8-aa04-4fd08ad62ae5",
+      "name": "filtrar os dados"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        -112
+      ],
+      "id": "bcc1b6e2-fadb-4127-bd48-17f897a09d2b",
+      "name": "condiçao de mensagem opçional"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "text",
+              "value": "=mesnagem de teste de envio em caixa"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -208,
+        -128
+      ],
+      "id": "deb806c3-bf32-4e85-906d-543b7c536969",
+      "name": "Enviar Mensagem  de texto",
+      "notesInFlow": true,
+      "notes": "Envio de mensagem via API Big Conect usando campo 'MENSAGEM', estilo profissional"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "text",
+              "value": "🚀 *Mensagem Formatada*\n\n✅ Negrito: *texto*\n✅ Itálico: _texto_\n✅ Tachado: ~texto~\n\n*API Big Conect* _funcionando_ ~perfeitamente~!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -192,
+        144
+      ],
+      "id": "a4c858aa-d2da-41d0-8636-71d79d59cf44",
+      "name": "Enviar Mensagem Formatada",
+      "notesInFlow": true,
+      "notes": "Envio de mensagem de texto formatada via API Big Conect (negrito, itálico, tachado)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        160
+      ],
+      "id": "79da093e-6221-41cd-bc7c-9ce24ead93ce",
+      "name": "inicio1",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        160
+      ],
+      "id": "297d318a-8136-4eda-ab14-f888f25d258e",
+      "name": "filtrar os dados1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        160
+      ],
+      "id": "54b5182d-c8dd-4deb-a4d3-bf1db40f42fb",
+      "name": "condiçao de mensagem opçional1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        448
+      ],
+      "id": "dc5462ab-324f-4b70-ab9c-28b0b085a919",
+      "name": "inicio2",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        448
+      ],
+      "id": "15a4ac25-9d57-495b-bd41-89b949b7ffe5",
+      "name": "filtrar os dados2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        448
+      ],
+      "id": "b9d57b17-1545-4d1a-949b-95ec81641c7c",
+      "name": "condiçao de mensagem opçional2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "mediaUrl",
+              "value": "=https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/WhatsApp%20Image%202025-11-21%20at%2020.50.51.jpeg"
+            },
+            {
+              "name": "type",
+              "value": "image"
+            },
+            {
+              "name": "caption",
+              "value": "=nao precisa de texto "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -192,
+        432
+      ],
+      "id": "4443f5f4-37bb-40de-b09b-c7c33c190bd3",
+      "name": "Enviar Imagem ",
+      "notesInFlow": true,
+      "notes": "Envio de mídia usando caminho absoluto local do servidor via API Big Conect"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        736
+      ],
+      "id": "cbfaa756-1229-416a-a3c0-338df186d3a5",
+      "name": "inicio3",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        736
+      ],
+      "id": "b5eb43ae-539e-4734-ba69-567ad801f212",
+      "name": "filtrar os dados3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -544,
+        736
+      ],
+      "id": "6bfb1190-970f-4b54-a7a8-cf70e7ade79c",
+      "name": "condiçao de mensagem opçional3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "mediaUrl",
+              "value": "=https://github.com/systemhelpcod/big-conect-api/raw/refs/heads/main/video-exemplo/video.mp4"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "caption",
+              "value": "=Vídeo enviado via n8n! 🎥"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -192,
+        720
+      ],
+      "id": "317c45ea-b012-4b44-89df-15c79ac13c7d",
+      "name": "Enviar Vídeo",
+      "notesInFlow": true,
+      "notes": "Envio de vídeo remoto via API Big Conect usando estilo 'below' do n8n"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        1040
+      ],
+      "id": "1a52eb90-f364-4770-aecc-0a4dd20c4193",
+      "name": "inicio4",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        1040
+      ],
+      "id": "a6dfe602-feba-421b-b69f-86d2eaeb9857",
+      "name": "filtrar os dados4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -544,
+        1040
+      ],
+      "id": "f231c686-bc56-4059-8d06-fca7164d5f67",
+      "name": "condiçao de mensagem opçional4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "mediaUrl",
+              "value": "=https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+            },
+            {
+              "name": "type",
+              "value": "audio"
+            },
+            {
+              "name": "ptt",
+              "value": "={{ false }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -192,
+        1024
+      ],
+      "id": "c399aaf3-cd24-4433-897e-bd2f33c8d6f0",
+      "name": "Enviar Áudio (PTT)",
+      "notesInFlow": true,
+      "notes": "Envio de áudio/ptt via API Big Conect usando estilo 'below'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1088,
+        1296
+      ],
+      "id": "b7011abd-13c0-424a-b7b2-1fc89bcda3a1",
+      "name": "inicio5",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        1296
+      ],
+      "id": "50c6fe35-05a1-42cb-b30a-6d6b7b3fa7c8",
+      "name": "filtrar os dados5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        1296
+      ],
+      "id": "1a3cd2b4-e399-4dcd-bf7e-d681dfaf7e56",
+      "name": "condiçao de mensagem opçional5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/buttons",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "text",
+              "value": "🔘 TESTE DE BOTÕES INTERATIVOS  ENVIADO VIA  N8N"
+            },
+            {
+              "name": "buttons",
+              "value": "={{ [{\"id\": \"teste1\", \"text\": \"✅ Teste 1\"}, {\"id\": \"teste2\", \"text\": \"🔄 Teste 2\"}, {\"id\": \"teste3\", \"text\": \"📊 Teste 3\"}] }}"
+            },
+            {
+              "name": "footer",
+              "value": "API Big Conect - Botões Funcionando!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -192,
+        1280
+      ],
+      "id": "4bc32935-f430-4329-b791-3525a15bb51e",
+      "name": "Enviar Botões (Interactive)",
+      "notesInFlow": true,
+      "notes": "Envio de botões interativos via API Big Conect usando estilo 'below'"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/buttons",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json[\"NUMERO QUE MANDOU A MENSAGEM\"] }}"
+            },
+            {
+              "name": "text",
+              "value": "💎 TESTE BOTÕES COM IMAGEM"
+            },
+            {
+              "name": "buttons",
+              "value": "={{ [{\"id\": \"planos\", \"text\": \"💰 Ver Planos\"}, {\"id\": \"demo\", \"text\": \"🎬 Agendar Demo\"}, {\"id\": \"contratar\", \"text\": \"📝 Contratar\"}] }}"
+            },
+            {
+              "name": "image",
+              "value": "={{ {\"url\": \"https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logoapi.jpeg\"} }}"
+            },
+            {
+              "name": "footer",
+              "value": "Big Conect - API Profissional"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -176,
+        1488
+      ],
+      "id": "a6624e36-8344-48d5-8578-17b35102765c",
+      "name": "Enviar Botões com Imagem",
+      "notesInFlow": true,
+      "notes": "Botões interativos com imagem via API Big Conect, estilo 'below'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1088,
+        1504
+      ],
+      "id": "99ed5c3f-54bb-4f4e-aae4-8e5cfe7caec8",
+      "name": "inicio6",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        1504
+      ],
+      "id": "79884854-8732-4303-ad48-c8d80d2c96b3",
+      "name": "filtrar os dados6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        1504
+      ],
+      "id": "1c227f07-f9ca-4490-9441-da37c14a31be",
+      "name": "condiçao de mensagem opçional6"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1088,
+        1728
+      ],
+      "id": "55fee249-a091-4e19-9511-84ce87c6fecc",
+      "name": "inicio7",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -784,
+        1728
+      ],
+      "id": "251cb016-0614-4072-b1fc-4e46181d4857",
+      "name": "filtrar os dados7"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        1728
+      ],
+      "id": "a318f219-ea99-4c90-9a66-aa32027570cf",
+      "name": "condiçao de mensagem opçional7"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/list",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    to: $json['NUMERO QUE MANDOU A MENSAGEM'],\n    text: '📋 TESTE DE LISTA INTERATIVA',\n    buttonText: 'Abrir Opções',\n    title: 'Menu de Testes',\n    sections: [\n      {\n        title: '🧪 Testes Básicos',\n        rows: [\n          { title: 'Teste de Texto', description: 'Envio de mensagem simples', rowId: 'teste_texto' },\n          { title: 'Teste de Mídia', description: 'Envio de imagem e vídeo', rowId: 'teste_midia' }\n        ]\n      },\n      {\n        title: '⚡ Testes Avançados',\n        rows: [\n          { title: 'Teste de Áudio', description: 'Envio de mensagem de voz', rowId: 'teste_audio' },\n          { title: 'Teste de Documento', description: 'Envio de arquivos PDF', rowId: 'teste_documento' }\n        ]\n      }\n    ]\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -112,
+        1712
+      ],
+      "id": "31270e88-9977-49be-bed0-eeaf4c7a413d",
+      "name": "Enviar Lista Interativa",
+      "notesInFlow": true,
+      "notes": "Lista interativa via API Big Conect usando JSON como objeto JS (funciona no n8n)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1088,
+        1968
+      ],
+      "id": "8d72ed16-2b36-4068-b01c-219aef3974a0",
+      "name": "inicio8",
+      "webhookId": "5259f464-c65e-4640-adb4-6b63ab4b6a23"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d100b0a1-20e9-475c-85f0-5503a53f8c41",
+              "name": "HOST DA API",
+              "value": "={{ $json.headers.host }}",
+              "type": "string"
+            },
+            {
+              "id": "66526d70-1b3c-4917-9e89-aa95ee18de24",
+              "name": "USUARIO DO WHATSAPP",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "84572e6c-3d24-482f-8a87-d5e6661d250a",
+              "name": "EVENTO DE MENSAGEM",
+              "value": "={{ $json.body.data.event }}",
+              "type": "string"
+            },
+            {
+              "id": "68cf3fd1-61cb-43d2-8080-4b59d28f32dd",
+              "name": "ID DA MENSAGEM",
+              "value": "={{ $json.body.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3d3741f9-7094-48a2-8947-c7d413ae7e30",
+              "name": "NUMERO QUE MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.from }}",
+              "type": "string"
+            },
+            {
+              "id": "56e4f0c1-1d09-403e-b842-6f17bf80fe66",
+              "name": "DATA E HORA",
+              "value": "={{ $json.body.data.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "9cf830c1-a11b-431c-ad57-975df0c5b258",
+              "name": "TIPO DE MENSAGEM",
+              "value": "={{ $json.body.data.content.type }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd0b386-8640-402f-8275-b96c16a608d2",
+              "name": "CONTEUDO DA MENSAGEM",
+              "value": "={{ $json.body.data.content.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebbf5ca-66a5-4aa3-8fbb-87f5b3d67e87",
+              "name": "NUMERO QUE MANDOU A MENSAGEM PODE VIM EM JID TAMBEM POR ISSO ELE AQUI ",
+              "value": "={{ $json.body.data.sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "03d0ed5b-a552-4907-9a66-1af324038504",
+              "name": "NOME DE QUEM MANDOU A MENSAGEM",
+              "value": "={{ $json.body.data.sender.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -784,
+        1968
+      ],
+      "id": "69fe3d25-23b9-4a4f-bb93-a449b82cc10c",
+      "name": "filtrar os dados8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06710b99-4ffe-4fac-baea-74a0e4b8794a",
+              "leftValue": "={{ $json[\"CONTEUDO DA MENSAGEM\"] }}",
+              "rightValue": "Oi",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        1952
+      ],
+      "id": "91b3aa7e-adf2-4ecf-8ea8-2e0558d42115",
+      "name": "condiçao de mensagem opçional8"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://194.163.148.45:9009/api/{{$json[\"USUARIO DO WHATSAPP\"]}}/messages/bulk",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    messages: [\n      { to: '556292231423', text: '📨 Mensagem 1 do lote de teste' },\n      { to: '556292231423', text: '📨 Mensagem 2 do lote de teste' },\n      { to: '556292231423', text: '📨 Mensagem 3 do lote de teste' }\n    ],\n    delayBetweenMessages: 1000\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -80,
+        1936
+      ],
+      "id": "1c4584e2-4564-4625-a316-1edbb968fc0d",
+      "name": "Enviar Mensagens em Lote",
+      "notesInFlow": true,
+      "notes": "Envio de múltiplas mensagens com delay entre elas via API Big Conect"
+    }
+  ],
+  "pinData": {
+    "inicio": [
+      {
+        "json": {
+          "headers": {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "user-agent": "Big-Conect-API/1.0.0",
+            "x-api-source": "whatsapp-api",
+            "content-length": "451",
+            "host": "194.163.148.45:200",
+            "connection": "keep-alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "type": "message",
+            "sessionId": "4174496f0536c893ba23e34a219ffd0d",
+            "data": {
+              "event": "MESSAGE_RECEIVED",
+              "id": "A55C14D636428D016530E68D91E32145",
+              "from": "556292231423@s.whatsapp.net",
+              "timestamp": "2025-11-21T19:54:29.000Z",
+              "type": "conversation",
+              "content": {
+                "type": "text",
+                "text": "Oi"
+              },
+              "sender": {
+                "id": "556292231423@s.whatsapp.net",
+                "name": "Agda Fernanda",
+                "isFromMe": false
+              },
+              "messageType": "notify"
+            },
+            "timestamp": "2025-11-21T19:54:29.919Z"
+          },
+          "webhookUrl": "http://localhost:5678/webhook-test/api",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "inicio": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem  de texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio1": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados1": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional1": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem Formatada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio2": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados2": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional2": {
+      "main": [
+        [
+          {
+            "node": "Enviar Imagem ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio3": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados3": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional3": {
+      "main": [
+        [
+          {
+            "node": "Enviar Vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio4": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados4": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional4": {
+      "main": [
+        [
+          {
+            "node": "Enviar Áudio (PTT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio5": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados5": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional5": {
+      "main": [
+        [
+          {
+            "node": "Enviar Botões (Interactive)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio6": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados6": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional6": {
+      "main": [
+        [
+          {
+            "node": "Enviar Botões com Imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio7": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados7": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional7": {
+      "main": [
+        [
+          {
+            "node": "Enviar Lista Interativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inicio8": {
+      "main": [
+        [
+          {
+            "node": "filtrar os dados8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrar os dados8": {
+      "main": [
+        [
+          {
+            "node": "condiçao de mensagem opçional8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "condiçao de mensagem opçional8": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagens em Lote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b5710a71-24a3-4b61-b9ea-4cd25ac78a72",
+  "meta": {
+    "instanceId": "6d8f5de340c11961002fec28b05f7337317317ca1508460bf857bb179068daa8"
+  },
+  "id": "0RFrM9E3VcMacCXn",
+  "tags": []
+}
