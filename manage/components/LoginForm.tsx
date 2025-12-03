@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Key, Eye, EyeOff, LogIn, AlertCircle, PlayCircle, Check } from 'lucide-react';
+import { Server, Key, Eye, EyeOff, LogIn, AlertCircle, Check } from 'lucide-react';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
-import { ApiResponse, SessionRaw, SessionUI } from '../types';
+import { SessionRaw, SessionUI } from '../types';
+import { formatLastActivity } from '../utils/formatters';
+import { api } from '../services/api';
 
 interface LoginFormProps {
-  onSuccess: (sessions: SessionUI[], host: string) => void;
+  onSuccess: (sessions: SessionUI[], host: string, apiKey: string) => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
@@ -16,7 +18,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Carregar dados salvos ao iniciar
   useEffect(() => {
     const savedHost = localStorage.getItem('big_conect_host');
     const savedKey = localStorage.getItem('big_conect_apikey');
@@ -44,42 +45,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     return normalized;
   };
 
-  const calculateLastActivity = (timestamp: string | number): string => {
-    if (!timestamp) return 'Sem atividade';
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) return 'Desconhecido';
-
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 1) return 'Agora';
-    if (diffMins < 60) return `${diffMins} min atrás`;
-    
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-
   const mapSessions = (rawSessions: SessionRaw[]): SessionUI[] => {
-    return rawSessions.map(s => {
+    return rawSessions.map((s, index) => {
       let status: SessionUI['status'] = 'Desconectado';
       const rawStatus = s.status?.toLowerCase() || '';
       
-      if (s.isConnected) {
+      if (s.isConnected || rawStatus === 'connected' || rawStatus === 'inchat' || rawStatus === 'working') {
         status = 'Conectado';
-      } else if (rawStatus === 'connected') {
-        status = 'Conectado';
-      } else if (rawStatus.includes('qr') || rawStatus.includes('scan')) {
+      } 
+      else if (rawStatus.includes('qr') || rawStatus.includes('scan') || rawStatus === 'connecting') {
         status = 'QR Scan';
       }
 
+      const displayName = s.user?.name || `Cliente ${index + 1}`;
+
       return {
         id: s.sessionId,
-        name: `Sessão ${s.sessionId.substring(0, 6).toUpperCase()}`,
+        name: displayName,
         status,
         statusRaw: s.status,
-        lastActivity: calculateLastActivity(s.lastActivity),
+        lastActivity: formatLastActivity(s.lastActivity),
         battery: s.battery
       };
     });
@@ -91,54 +76,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     setIsLoading(true);
 
     const normalizedHost = normalizeUrl(host);
-    console.log(`Tentando conectar a: ${normalizedHost}/api/sessions`);
 
     try {
       if (!host) throw new Error('Por favor, informe a URL da API.');
       if (!apiKey) throw new Error('Por favor, informe a API Key.');
 
       try {
-        const sessionsRes = await fetch(`${normalizedHost}/api/sessions`, {
-          method: 'GET',
-          mode: 'cors',
-          credentials: 'omit', 
-          headers: { 'x-api-key': apiKey }
-        });
-
-        if (sessionsRes.status === 401 || sessionsRes.status === 403) {
-          throw new Error('API Key inválida ou não autorizada pelo servidor.');
-        }
-
-        if (!sessionsRes.ok) {
-          throw new Error(`Erro na API (${sessionsRes.status}): ${sessionsRes.statusText}`);
-        }
-
-        const data = await sessionsRes.json() as ApiResponse<SessionRaw[]> | SessionRaw[];
+        // Usa o serviço centralizado de API
+        const rawSessions = await api.validateConnection(normalizedHost, apiKey);
         
-        let sessionsList: SessionRaw[] = [];
-        if (Array.isArray(data)) {
-          sessionsList = data;
-        } else if ((data as any).response && Array.isArray((data as any).response)) {
-          sessionsList = (data as any).response;
-        } else if ((data as any).data && Array.isArray((data as any).data)) {
-            sessionsList = (data as any).data;
-        }
+        // Formata os dados para a UI
+        const uiSessions = mapSessions(rawSessions);
 
-        const uiSessions = mapSessions(sessionsList);
-
-        // Lógica de Salvar Login
         if (rememberMe) {
-            localStorage.setItem('big_conect_host', host); // Salva o input original
+            localStorage.setItem('big_conect_host', host);
             localStorage.setItem('big_conect_apikey', apiKey);
         } else {
             localStorage.removeItem('big_conect_host');
             localStorage.removeItem('big_conect_apikey');
         }
 
-        onSuccess(uiSessions, normalizedHost);
+        onSuccess(uiSessions, normalizedHost, apiKey);
 
       } catch (err: any) {
-        console.error("Erro detalhado:", err);
+        console.error("Erro no login:", err);
+        
         if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             let msg = `O navegador bloqueou a conexão com ${normalizedHost}.`;
@@ -150,6 +112,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             }
             throw new Error(msg);
         }
+
+        if (err.message.includes('429')) {
+             throw new Error("Muitas tentativas de conexão. Aguarde alguns instantes.");
+        }
+
         throw new Error(err.message || 'Falha ao validar credenciais.');
       }
 
@@ -160,23 +127,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleDemoMode = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-        const mockSessions: SessionUI[] = [
-            { id: 'marketing_wpp', name: 'Sessão MARKET', status: 'Conectado', statusRaw: 'CONNECTED', lastActivity: 'Agora', battery: 85 },
-            { id: 'suporte_01', name: 'Sessão SUPORT', status: 'QR Scan', statusRaw: 'qr_scan', lastActivity: '15 min atrás' },
-            { id: 'financeiro', name: 'Sessão FINANC', status: 'Desconectado', statusRaw: 'disconnected', lastActivity: 'Ontem' },
-            { id: 'dev_bot_02', name: 'Sessão DEVBOT', status: 'Conectado', statusRaw: 'CONNECTED', lastActivity: '2 min atrás', battery: 42 },
-        ];
-        onSuccess(mockSessions, 'https://demo.big-api.com');
-        setIsLoading(false);
-    }, 800);
-  };
-
   return (
     <div className="w-full max-w-[440px] p-8 sm:p-10 bg-[#202C33] rounded-2xl shadow-2xl border border-[#2A3942] relative overflow-hidden">
-      {/* Decorative top accent */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00A884] to-[#00CC99]"></div>
 
       <div className="text-center mb-10">
@@ -207,7 +159,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             onChange={(e) => setApiKey(e.target.value)}
             type={showKey ? "text" : "password"}
             icon={<Key className="w-5 h-5" />}
-            className="mb-0" // Override Input default margin
+            className="mb-0" 
             rightElement={
                 <button
                 type="button"
@@ -221,7 +173,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             />
         </div>
 
-        {/* Custom Checkbox "Lembrar-me" */}
         <div className="flex items-center justify-between pt-1">
             <label 
                 className="flex items-center gap-2.5 cursor-pointer group select-none"
@@ -261,26 +212,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             {isLoading ? 'Autenticando...' : 'Acessar Painel'}
             </Button>
         </div>
-
-        <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#2A3942]"></div>
-            </div>
-            <div className="relative flex justify-center">
-                <span className="px-3 bg-[#202C33] text-xs text-gray-500 uppercase tracking-wider">ou teste com</span>
-            </div>
-        </div>
-
-        <Button 
-            type="button"
-            variant="ghost"
-            onClick={handleDemoMode}
-            disabled={isLoading}
-            className="w-full h-10 text-sm font-normal border border-[#2A3942] hover:border-[#374248] hover:bg-[#2A3942]/50"
-            icon={<PlayCircle className="w-4 h-4" />}
-        >
-            Modo Demonstração
-        </Button>
       </form>
     </div>
   );

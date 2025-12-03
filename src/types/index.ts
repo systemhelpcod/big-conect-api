@@ -1,23 +1,24 @@
-// /root/api/big2/beta/api-big-conect/src/types/index.ts
+export interface IUser {
+  id: string;
+  name?: string;
+  phone?: string;
+}
 
 export interface ISession {
   sessionId: string;
-   name?: string;
+  name?: string; // nome amigável da sessão
   isConnected: boolean;
-  qrCode?: string;
-  user?: {
-    id: string;
-    name?: string;
-    phone?: string;
-  };
-  createdAt: Date;
-  lastActivity: Date;
   status: 'connecting' | 'connected' | 'disconnected' | 'failed';
+  qrCode?: string;
+  user?: IUser;
+  deviceName?: string; // nome do dispositivo opcional
   deviceInfo?: {
     userAgent: string;
     browser: string;
     platform: string;
   };
+  createdAt: Date;
+  lastActivity: Date;
 }
 
 export interface IMessage {

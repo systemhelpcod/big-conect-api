@@ -1,7 +1,7 @@
 import React, { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   isLoading?: boolean;
   icon?: ReactNode;
 }
@@ -15,12 +15,13 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props 
 }) => {
-  const baseStyles = "w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98]";
+  const baseStyles = "w-full py-2.5 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] text-sm";
   
   const variants = {
     primary: "bg-[#00A884] hover:bg-[#008f6f] text-[#111B21] shadow-lg shadow-[#00A884]/20 disabled:opacity-50 disabled:cursor-not-allowed",
     secondary: "bg-[#202C33] hover:bg-[#2A3942] text-[#00A884] border border-[#00A884]/30 disabled:opacity-50",
-    ghost: "bg-transparent hover:bg-[#202C33] text-gray-400 hover:text-[#E9EDEF]"
+    ghost: "bg-transparent hover:bg-[#202C33] text-gray-400 hover:text-[#E9EDEF]",
+    danger: "bg-[#F15C6D]/10 hover:bg-[#F15C6D]/20 text-[#F15C6D] border border-[#F15C6D]/30"
   };
 
   return (

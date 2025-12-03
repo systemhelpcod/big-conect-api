@@ -4,10 +4,13 @@ import { IApiResponse } from '../types';
 import { logger } from '../utils/logger';
 
 export class SessionController {
+
+  // CRIAR SESSÃO
   async createSession(req: Request, res: Response) {
     try {
-      const { deviceName } = req.body;
-      const session = await sessionManager.createSession(deviceName); // envia deviceName opcional
+      const { deviceName, name } = req.body;
+
+      const session = await sessionManager.createSession(deviceName, name);
 
       const response: IApiResponse = {
         success: true,
@@ -28,6 +31,7 @@ export class SessionController {
     }
   }
 
+  // LISTAR SESSÕES
   async getSessions(req: Request, res: Response) {
     try {
       const sessions = sessionManager.getAllSessions();
@@ -50,6 +54,7 @@ export class SessionController {
     }
   }
 
+  // OBTER QR CODE DA SESSÃO
   async getSessionQR(req: Request, res: Response) {
     try {
       const { sessionId } = req.params;
@@ -80,6 +85,49 @@ export class SessionController {
     }
   }
 
+  // RECONEXÃO — GERAR NOVO QR AUTOMATICO
+  async reconnectSession(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+
+      const sessionData = sessionManager.getSession(sessionId);
+      if (!sessionData) {
+        return res.status(404).json({
+          success: false,
+          error: 'Session not found'
+        });
+      }
+
+      // força desconectar
+      await sessionManager.deleteSession(sessionId);
+
+      // recria a sessão automaticamente
+      const newSession = await sessionManager.createSession(
+        sessionData.session.deviceName,
+        sessionData.session.user?.name || undefined
+      );
+
+      const response: IApiResponse = {
+        success: true,
+        message: 'Session reconnected successfully. New QR generated.',
+        data: newSession
+      };
+
+      res.json(response);
+
+    } catch (error) {
+      logger.error('Error reconnecting session:', error);
+
+      const response: IApiResponse = {
+        success: false,
+        error: 'Failed to reconnect session'
+      };
+
+      res.status(500).json(response);
+    }
+  }
+
+  // DELETAR SESSÃO
   async deleteSession(req: Request, res: Response) {
     try {
       const { sessionId } = req.params;
@@ -110,6 +158,7 @@ export class SessionController {
     }
   }
 
+  // STATUS DA SESSÃO
   async getSessionStatus(req: Request, res: Response) {
     try {
       const { sessionId } = req.params;

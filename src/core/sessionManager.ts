@@ -37,8 +37,11 @@ export class SessionManager {
 
           // Atualizar contador baseado em sessões existentes
           if (session.user?.name?.startsWith('Cliente ')) {
-            const num = parseInt(session.user.name.replace('Cliente ', '')) || 0;
-            if (num > this.clienteCount) this.clienteCount = num;
+            const match = session.user.name.match(/Cliente (\d+)/);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > this.clienteCount) this.clienteCount = num;
+            }
           }
         }
 
@@ -69,14 +72,21 @@ export class SessionManager {
     }
   }
 
-  async createSession(deviceName?: string): Promise<ISession> {
+  /**
+   * Cria uma nova sessão.
+   * @param deviceName Nome do dispositivo (opcional)
+   * @param name Nome amigável da sessão (opcional)
+   */
+  async createSession(deviceName?: string, name?: string): Promise<ISession> {
     const sessionId = generateSessionId();
 
-    // Se não tiver deviceName, gera automaticamente Cliente 1, 2, 3...
-    let sessionName = deviceName?.trim();
-    if (!sessionName || sessionName === '') {
-      this.clienteCount += 1;
-      sessionName = `Cliente ${this.clienteCount}`;
+    // Se não tiver name, gera automaticamente Cliente 1, 2, 3...
+    this.clienteCount += 1;
+    let sessionName = name?.trim() || `Cliente ${this.clienteCount}`;
+
+    // Se houver deviceName, adiciona junto no nome
+    if (deviceName?.trim()) {
+      sessionName += ` (${deviceName.trim()})`;
     }
 
     const session: ISession = {
@@ -86,8 +96,8 @@ export class SessionManager {
       createdAt: new Date(),
       lastActivity: new Date(),
       user: {
-        id: sessionId,      // ✅ id obrigatório preenchido
-        name: sessionName   // nome amigável
+        id: sessionId,
+        name: sessionName
       }
     };
 
