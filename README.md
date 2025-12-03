@@ -153,7 +153,7 @@ curl -X DELETE http://127.0.0.1:9009/api/sessions/{sessionId} \
 
 ## 📤 **Envio de Mensagens**
 
-> Todos os endpoints abaixo exigem `x-api-key`.
+> Todos os endpoints abaixo exigem `x-api-key`. Substitua `{sessionId}` pelo ID da sua sessão.
 
 * **Mensagem de Texto**
 
@@ -164,7 +164,7 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -d '{"to":"5511999999999","text":"Olá! Mensagem via API Big Conect 🚀"}'
 ```
 
-* **Mensagem Formatada**
+* **Mensagem Formatada (negrito, itálico, tachado)**
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
@@ -198,13 +198,13 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "x-api-key: 123456789" \
   -d '{
     "to": "5511999999999",
-    "mediaUrl": "https://example.com/video.mp4",
+    "mediaUrl": "https://github.com/systemhelpcod/big-conect-api/raw/refs/heads/main/video-exemplo/video.mp4",
     "type": "video",
     "caption": "Vídeo enviado via API! 🎥"
   }'
 ```
 
-* **Áudio PTT**
+* **Áudio (PTT opcional)**
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
@@ -212,29 +212,13 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   -H "x-api-key: 123456789" \
   -d '{
     "to": "5511999999999",
-    "mediaUrl": "https://example.com/audio.mp3",
+    "mediaUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     "type": "audio",
-    "ptt": true,
-    "forceOpus": true
+    "ptt": false
   }'
 ```
 
-* **Documento/PDF**
-
-```bash
-curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: 123456789" \
-  -d '{
-    "to": "5511999999999",
-    "mediaUrl": "https://example.com/document.pdf",
-    "type": "document",
-    "fileName": "documento.pdf",
-    "caption": "Documento importante 📄"
-  }'
-```
-
-* **Botões**
+* **Botões Interativos**
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
@@ -242,15 +226,36 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
   -H "x-api-key: 123456789" \
   -d '{
     "to": "5511999999999",
-    "text": "Escolha uma opção:",
+    "text": "🔘 TESTE DE BOTÕES INTERATIVOS",
     "buttons": [
-      {"id": "btn1", "text": "Opção 1"},
-      {"id": "btn2", "text": "Opção 2"}
-    ]
+      {"id": "teste1", "text": "✅ Teste 1"},
+      {"id": "teste2", "text": "🔄 Teste 2"},
+      {"id": "teste3", "text": "📊 Teste 3"}
+    ],
+    "footer": "API Big Conect - Botões Funcionando!"
   }'
 ```
 
-* **Listas**
+* **Botões com Imagem**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "text": "💎 TESTE BOTÕES COM IMAGEM",
+    "buttons": [
+      {"id": "planos", "text": "💰 Ver Planos"},
+      {"id": "demo", "text": "🎬 Agendar Demo"},
+      {"id": "contratar", "text": "📝 Contratar"}
+    ],
+    "image": {"url": "https://raw.githubusercontent.com/systemhelpcod/big-conect-api/main/Imagem-exemplos/logoapi.jpeg"},
+    "footer": "Big Conect - API Profissional"
+  }'
+```
+
+* **Lista Interativa**
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/list \
@@ -258,42 +263,42 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/list \
   -H "x-api-key: 123456789" \
   -d '{
     "to": "5511999999999",
-    "text": "Selecione um item:",
+    "text": "📋 TESTE DE LISTA INTERATIVA",
+    "buttonText": "Abrir Opções",
+    "title": "Menu de Testes",
     "sections": [
       {
-        "title": "Seção 1",
+        "title": "🧪 Testes Básicos",
         "rows": [
-          {"id": "item1", "title": "Item 1"},
-          {"id": "item2", "title": "Item 2"}
+          {"title": "Teste de Texto", "description": "Envio de mensagem simples", "rowId": "teste_texto"},
+          {"title": "Teste de Mídia", "description": "Envio de imagem e vídeo", "rowId": "teste_midia"}
+        ]
+      },
+      {
+        "title": "⚡ Testes Avançados",
+        "rows": [
+          {"title": "Teste de Áudio", "description": "Envio de mensagem de voz", "rowId": "teste_audio"},
+          {"title": "Teste de Documento", "description": "Envio de arquivos PDF", "rowId": "teste_documento"}
         ]
       }
     ]
   }'
 ```
 
-* **Reações**
-
-```bash
-curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/reactions \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: 123456789" \
-  -d '{
-    "to": "5511999999999",
-    "messageId": "ABCD1234",
-    "reaction": "👍"
-  }'
-```
-
 * **Mensagens em Lote**
 
 ```bash
-curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/batch \
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/bulk \
   -H "Content-Type: application/json" \
   -H "x-api-key: 123456789" \
-  -d '[
-    {"to":"5511999999999","text":"Mensagem 1"},
-    {"to":"5511999999998","text":"Mensagem 2"}
-  ]'
+  -d '{
+    "messages": [
+      {"to": "556292231423", "text": "📨 Mensagem 1 do lote de teste"},
+      {"to": "556292231423", "text": "📨 Mensagem 2 do lote de teste"},
+      {"to": "556292231423", "text": "📨 Mensagem 3 do lote de teste"}
+    ],
+    "delayBetweenMessages": 1000
+  }'
 ```
 
 ---
@@ -337,4 +342,3 @@ curl -X GET http://127.0.0.1:9009/ \
 
 </div>
 
----
