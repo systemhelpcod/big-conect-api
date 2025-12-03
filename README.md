@@ -37,14 +37,11 @@ cd big-conect-api
 #### **2. Configure as variáveis de ambiente**
 
 ```bash
-# Copie o arquivo de exemplo
 cp .env-exemplo .env
-
-# Edite o arquivo .env com suas configurações
-nano .env  # ou use seu editor preferido
+nano .env
 ```
 
-**Conteúdo do arquivo `.env`:**
+**Exemplo `.env`:**
 
 ```env
 NODE_ENV=development
@@ -72,7 +69,7 @@ ALLOWED_ORIGINS=*
 npm install
 ```
 
-#### **4. Em caso de erro na instalação:**
+#### **4. Caso ocorra erro na instalação**
 
 ```bash
 rm -rf node_modules package-lock.json
@@ -87,7 +84,22 @@ npm run dev
 
 #### **6. Configure a sessão WhatsApp**
 
-1. Crie a sessão:
+1. Crie a sessão: `POST /api/sessions`
+2. Obtenha QR Code: `GET /api/sessions/{sessionId}/qr`
+3. Escaneie com WhatsApp (Dispositivos Conectados)
+4. API pronta para uso 🎉
+
+---
+
+## 💻 **USO DA API COM X-API-KEY**
+
+> Todos os endpoints exigem o header `x-api-key` com a chave do `.env` (`SECRET_APIKEY`).
+
+```http
+x-api-key: 123456789
+```
+
+Exemplo `curl` para criar sessão:
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/sessions \
@@ -95,69 +107,64 @@ curl -X POST http://127.0.0.1:9009/api/sessions \
   -H "x-api-key: 123456789"
 ```
 
-2. Obtenha QR Code:
-
-```bash
-curl http://127.0.0.1:9009/api/sessions/{sessionId}/qr \
-  -H "x-api-key: 123456789"
-```
-
-3. Escaneie com WhatsApp (Dispositivos Conectados)
-4. Verifique status:
-
-```bash
-curl http://127.0.0.1:9009/api/sessions/{sessionId}/status \
-  -H "x-api-key: 123456789"
-```
-
 ---
 
-## 💻 **USO DA API COM X-API-KEY**
+## 📋 **ENDPOINTS PRINCIPAIS**
 
-> Todas as requisições REST devem usar o header `x-api-key` configurado no `.env`.
+### 🔄 **Gestão de Sessões**
 
-Exemplo:
+* **Criar Nova Sessão**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/sessions \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789"
+```
+
+* **Listar Sessões**
 
 ```bash
 curl -X GET http://127.0.0.1:9009/api/sessions \
   -H "x-api-key: 123456789"
 ```
 
-**Exemplo de resposta atualizada:**
+* **Obter QR Code**
 
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "sessionId": "6a593d1c8fe06bda72f47002a495b080",
-      "isConnected": false,
-      "status": "connecting",
-      "createdAt": "2025-12-03T15:32:43.922Z",
-      "lastActivity": "2025-12-03T15:32:43.922Z",
-      "user": {
-        "id": "6a593d1c8fe06bda72f47002a495b080",
-        "name": "MeuDevice"
-      }
-    },
-    {
-      "sessionId": "4174496f0536c893ba23e34a219ffd0d",
-      "isConnected": false,
-      "status": "connected",
-      "createdAt": "2025-11-19T15:33:48.362Z",
-      "lastActivity": "2025-12-03T15:13:53.682Z"
-    }
-  ]
-}
+```bash
+curl -X GET http://127.0.0.1:9009/api/sessions/{sessionId}/qr \
+  -H "x-api-key: 123456789"
+```
+
+* **Status da Sessão**
+
+```bash
+curl -X GET http://127.0.0.1:9009/api/sessions/{sessionId}/status \
+  -H "x-api-key: 123456789"
+```
+
+* **Deletar Sessão**
+
+```bash
+curl -X DELETE http://127.0.0.1:9009/api/sessions/{sessionId} \
+  -H "x-api-key: 123456789"
 ```
 
 ---
 
-## 📤 **ENVIO DE MENSAGENS**
+## 📤 **Envio de Mensagens**
 
-> Todos os endpoints seguem o padrão de envio com `x-api-key`:
+> Todos os endpoints abaixo exigem `x-api-key`.
 
-Exemplo de mensagem de texto:
+* **Mensagem de Texto**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{"to":"5511999999999","text":"Olá! Mensagem via API Big Conect 🚀"}'
+```
+
+* **Mensagem Formatada**
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
@@ -165,11 +172,11 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/text \
   -H "x-api-key: 123456789" \
   -d '{
     "to": "5511999999999",
-    "text": "Olá! Mensagem via API Big Conect 🚀"
+    "text": "🚀 *Mensagem Formatada*\n✅ Negrito: *texto*\n✅ Itálico: _texto_\n✅ Tachado: ~texto~"
   }'
 ```
 
-Exemplo de envio de imagem:
+* **Imagem**
 
 ```bash
 curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
@@ -183,35 +190,139 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
   }'
 ```
 
+* **Vídeo**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "mediaUrl": "https://example.com/video.mp4",
+    "type": "video",
+    "caption": "Vídeo enviado via API! 🎥"
+  }'
+```
+
+* **Áudio PTT**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "mediaUrl": "https://example.com/audio.mp3",
+    "type": "audio",
+    "ptt": true,
+    "forceOpus": true
+  }'
+```
+
+* **Documento/PDF**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "mediaUrl": "https://example.com/document.pdf",
+    "type": "document",
+    "fileName": "documento.pdf",
+    "caption": "Documento importante 📄"
+  }'
+```
+
+* **Botões**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/buttons \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "text": "Escolha uma opção:",
+    "buttons": [
+      {"id": "btn1", "text": "Opção 1"},
+      {"id": "btn2", "text": "Opção 2"}
+    ]
+  }'
+```
+
+* **Listas**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/list \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "text": "Selecione um item:",
+    "sections": [
+      {
+        "title": "Seção 1",
+        "rows": [
+          {"id": "item1", "title": "Item 1"},
+          {"id": "item2", "title": "Item 2"}
+        ]
+      }
+    ]
+  }'
+```
+
+* **Reações**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/reactions \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '{
+    "to": "5511999999999",
+    "messageId": "ABCD1234",
+    "reaction": "👍"
+  }'
+```
+
+* **Mensagens em Lote**
+
+```bash
+curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/batch \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 123456789" \
+  -d '[
+    {"to":"5511999999999","text":"Mensagem 1"},
+    {"to":"5511999999998","text":"Mensagem 2"}
+  ]'
+```
+
 ---
 
-## ⚙️ **CONFIGURAÇÕES E SEGURANÇA**
+## 🛠 **CONFIGURAÇÃO E MONITORAMENTO**
 
-* **X-API-KEY**: obrigatória em todas as requisições
-* **SECRET_KEY**: usada internamente para tokens e segurança
-* **Persistência de sessão**: salva em `./sessions`
-* **Recomendação**: usar `IPV4=0.0.0.0` para acesso remoto seguro com firewall
+* **Health Check**
 
----
+```bash
+curl -X GET http://127.0.0.1:9009/health \
+  -H "x-api-key: 123456789"
+```
 
-## 🛡 **RECURSOS AVANÇADOS**
+* **Informações da API**
 
-* Multi-sessões simultâneas
-* Reconexão automática
-* Sistema anti-ban inteligente
-* Webhooks nativos para mensagens recebidas
-* Logs detalhados
-* Envio otimizado de áudio PTT
+```bash
+curl -X GET http://127.0.0.1:9009/ \
+  -H "x-api-key: 123456789"
+```
 
 ---
 
-## 💡 **DICAS IMPORTANTES**
+## ✅ **NOTAS IMPORTANTES**
 
-* Use **Session ID** retornado ao criar a sessão
-* Escaneie o QR Code via WhatsApp (Dispositivos Conectados)
-* Sempre envie `x-api-key` nas requisições
-* URLs de mídia devem ser públicas e acessíveis
-* Respeite limites de envio para evitar bloqueios
+1. `x-api-key` obrigatório em todos os endpoints
+2. `.env` atualizado com `SECRET_APIKEY`
+3. Use sempre `IPV4=0.0.0.0` para conexões externas
+4. Sessões retornam `user.id` e `user.name`
+5. Mensagens multimídia, botões, listas e reações seguem padrão do header `x-api-key`
 
 ---
 
@@ -226,3 +337,4 @@ curl -X POST http://127.0.0.1:9009/api/{sessionId}/messages/media \
 
 </div>
 
+---
