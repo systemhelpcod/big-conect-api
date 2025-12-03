@@ -1,0 +1,21 @@
+{
+  "name": "n8n-nodes-big-api",
+  "version": "1.0.0",
+  "description": "Node da Big API para uso no n8n.",
+  "keywords": [
+    "n8n",
+    "workflow",
+    "node",
+    "big-api",
+    "whatsapp"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}

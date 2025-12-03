@@ -2,6 +2,7 @@
 
 export interface ISession {
   sessionId: string;
+   name?: string;
   isConnected: boolean;
   qrCode?: string;
   user?: {
