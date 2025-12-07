@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { sessionManager } from '../core/sessionManager';
-import { IApiResponse } from '../types';
+import { IApiResponse, ISession } from '../types';
 import { logger } from '../utils/logger';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class SessionController {
 
@@ -9,7 +11,6 @@ export class SessionController {
   async createSession(req: Request, res: Response) {
     try {
       const { deviceName, name } = req.body;
-
       const session = await sessionManager.createSession(deviceName, name);
 
       const response: IApiResponse = {
@@ -21,13 +22,7 @@ export class SessionController {
       res.status(201).json(response);
     } catch (error) {
       logger.error('Error creating session:', error);
-
-      const response: IApiResponse = {
-        success: false,
-        error: 'Failed to create session'
-      };
-
-      res.status(500).json(response);
+      res.status(500).json({ success: false, error: 'Failed to create session' });
     }
   }
 
@@ -35,95 +30,57 @@ export class SessionController {
   async getSessions(req: Request, res: Response) {
     try {
       const sessions = sessionManager.getAllSessions();
-
-      const response: IApiResponse = {
-        success: true,
-        data: sessions
-      };
-
-      res.json(response);
+      res.json({ success: true, data: sessions });
     } catch (error) {
       logger.error('Error getting sessions:', error);
-
-      const response: IApiResponse = {
-        success: false,
-        error: 'Failed to get sessions'
-      };
-
-      res.status(500).json(response);
+      res.status(500).json({ success: false, error: 'Failed to get sessions' });
     }
   }
 
-  // OBTER QR CODE DA SESSÃO
+  // OBTER QR CODE DE UMA SESSÃO
   async getSessionQR(req: Request, res: Response) {
     try {
       const { sessionId } = req.params;
       const qrCode = await sessionManager.getSessionQRCode(sessionId);
 
       if (qrCode) {
-        const response: IApiResponse = {
-          success: true,
-          data: { qrCode }
-        };
-        res.json(response);
+        res.json({ success: true, data: { qrCode } });
       } else {
-        const response: IApiResponse = {
-          success: false,
-          error: 'Session not found or QR code not available'
-        };
-        res.status(404).json(response);
+        res.status(404).json({ success: false, error: 'Session not found or QR code not available' });
       }
     } catch (error) {
       logger.error('Error getting session QR:', error);
-
-      const response: IApiResponse = {
-        success: false,
-        error: 'Failed to get QR code'
-      };
-
-      res.status(500).json(response);
+      res.status(500).json({ success: false, error: 'Failed to get QR code' });
     }
   }
 
-  // RECONEXÃO — GERAR NOVO QR AUTOMATICO
+  // RECONEXÃO — GERAR NOVO QR E RECRIAR A SESSÃO
   async reconnectSession(req: Request, res: Response) {
     try {
       const { sessionId } = req.params;
-
       const sessionData = sessionManager.getSession(sessionId);
+
       if (!sessionData) {
-        return res.status(404).json({
-          success: false,
-          error: 'Session not found'
-        });
+        return res.status(404).json({ success: false, error: 'Session not found' });
       }
 
-      // força desconectar
+      logger.warn(`Reconnecting session ${sessionId}...`);
       await sessionManager.deleteSession(sessionId);
 
-      // recria a sessão automaticamente
       const newSession = await sessionManager.createSession(
         sessionData.session.deviceName,
         sessionData.session.user?.name || undefined
       );
 
-      const response: IApiResponse = {
+      res.json({
         success: true,
         message: 'Session reconnected successfully. New QR generated.',
         data: newSession
-      };
-
-      res.json(response);
+      });
 
     } catch (error) {
       logger.error('Error reconnecting session:', error);
-
-      const response: IApiResponse = {
-        success: false,
-        error: 'Failed to reconnect session'
-      };
-
-      res.status(500).json(response);
+      res.status(500).json({ success: false, error: 'Failed to reconnect session' });
     }
   }
 
@@ -134,27 +91,13 @@ export class SessionController {
       const deleted = await sessionManager.deleteSession(sessionId);
 
       if (deleted) {
-        const response: IApiResponse = {
-          success: true,
-          message: 'Session deleted successfully'
-        };
-        res.json(response);
+        res.json({ success: true, message: 'Session deleted successfully' });
       } else {
-        const response: IApiResponse = {
-          success: false,
-          error: 'Session not found'
-        };
-        res.status(404).json(response);
+        res.status(404).json({ success: false, error: 'Session not found' });
       }
     } catch (error) {
       logger.error('Error deleting session:', error);
-
-      const response: IApiResponse = {
-        success: false,
-        error: 'Failed to delete session'
-      };
-
-      res.status(500).json(response);
+      res.status(500).json({ success: false, error: 'Failed to delete session' });
     }
   }
 
@@ -166,28 +109,79 @@ export class SessionController {
 
       if (sessionData) {
         const status = await sessionData.client.getStatus();
-
-        const response: IApiResponse = {
-          success: true,
-          data: status
-        };
-        res.json(response);
+        res.json({ success: true, data: status });
       } else {
-        const response: IApiResponse = {
-          success: false,
-          error: 'Session not found'
-        };
-        res.status(404).json(response);
+        res.status(404).json({ success: false, error: 'Session not found' });
       }
     } catch (error) {
       logger.error('Error getting session status:', error);
+      res.status(500).json({ success: false, error: 'Failed to get session status' });
+    }
+  }
 
-      const response: IApiResponse = {
-        success: false,
-        error: 'Failed to get session status'
-      };
+  // ⭐ DEFINIR WEBHOOK INDIVIDUAL DA SESSÃO
+  async setSessionWebhook(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+      const { webhookUrl } = req.body;
 
-      res.status(500).json(response);
+      if (!webhookUrl || typeof webhookUrl !== 'string') {
+        return res.status(400).json({ success: false, message: 'O campo "webhookUrl" é obrigatório' });
+      }
+
+      const sessionData = sessionManager.getSession(sessionId) as { session: ISession & { webhookUrl?: string }, client: any };
+      if (!sessionData) {
+        return res.status(404).json({ success: false, message: `Sessão ${sessionId} não encontrada` });
+      }
+
+      const configDir = path.join(process.env.PATCH_TOKENS || './sessions', sessionId);
+      if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+
+      const configPath = path.join(configDir, 'config.json');
+      let config: any = {};
+      if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      }
+
+      config['webhookUrl'] = webhookUrl;
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+      sessionData.session.webhookUrl = webhookUrl;
+
+      res.json({ success: true, message: `Webhook atualizado para a sessão ${sessionId}`, webhookUrl });
+
+    } catch (error: any) {
+      logger.error('Erro ao definir webhook da sessão:', error);
+      res.status(500).json({ success: false, message: 'Erro ao atualizar webhook', error: error.message });
+    }
+  }
+
+  // ⭐ DELETAR WEBHOOK INDIVIDUAL DA SESSÃO
+  async deleteSessionWebhook(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+
+      const sessionData = sessionManager.getSession(sessionId) as { session: ISession & { webhookUrl?: string }, client: any };
+      if (!sessionData) {
+        return res.status(404).json({ success: false, message: `Sessão ${sessionId} não encontrada` });
+      }
+
+      const configDir = path.join(process.env.PATCH_TOKENS || './sessions', sessionId);
+      const configPath = path.join(configDir, 'config.json');
+
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        delete config['webhookUrl'];
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+      }
+
+      delete sessionData.session.webhookUrl;
+
+      res.json({ success: true, message: `Webhook removido da sessão ${sessionId}` });
+
+    } catch (error: any) {
+      logger.error('Erro ao deletar webhook da sessão:', error);
+      res.status(500).json({ success: false, message: 'Erro ao deletar webhook', error: error.message });
     }
   }
 }
